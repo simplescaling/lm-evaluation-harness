@@ -257,6 +257,18 @@ def setup_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Sets trust_remote_code to True to execute code to create HF Datasets from the Hub",
     )
+    parser.add_argument(
+        "--random_subsample",
+        action="store_true",
+        default=False,
+        help="If True, subsample '--limit' dataset examples randomly.",
+    )
+    parser.add_argument(
+        "--eval_uuid",
+        type=str,
+        default="datetime",
+        help="Unique ID for the evaluation. Defaults to datetime",
+    )
     return parser
 
 
@@ -404,6 +416,8 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
         numpy_random_seed=args.seed[1],
         torch_random_seed=args.seed[2],
         fewshot_random_seed=args.seed[3],
+        bootstrap_iters=0,
+        random_subsample=args.random_subsample,
         **request_caching_args,
     )
 
@@ -429,7 +443,8 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
                 eval_logger.info(f"Logging to Weights and Biases failed due to {e}")
 
         evaluation_tracker.save_results_aggregated(
-            results=results, samples=samples if args.log_samples else None
+            results=results, samples=samples if args.log_samples else None,
+            eval_uuid=args.eval_uuid,
         )
 
         if args.log_samples:

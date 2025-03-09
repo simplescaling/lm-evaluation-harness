@@ -27,7 +27,7 @@ class DummyLM(LM):
         res = []
 
         for request in tqdm(requests, disable=disable_tqdm):
-            res.append("lol")
+            res.append("1")
             assert request.arguments[0].strip() != ""
 
         return res

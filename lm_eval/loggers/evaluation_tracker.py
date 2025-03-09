@@ -191,6 +191,7 @@ class EvaluationTracker:
         self,
         results: dict,
         samples: dict,
+        eval_uuid: str,
     ) -> None:
         """
         Saves the aggregated results and samples to the output path and pushes them to the Hugging Face hub if requested.
@@ -229,7 +230,10 @@ class EvaluationTracker:
                 path = path.joinpath(self.general_config_tracker.model_name_sanitized)
                 path.mkdir(parents=True, exist_ok=True)
 
-                self.date_id = datetime.now().isoformat().replace(":", "-")
+                if eval_uuid=="datetime":
+                    self.date_id = datetime.now().isoformat().replace(":", "-")
+                else:
+                    self.date_id=eval_uuid
                 file_results_aggregated = path.joinpath(f"results_{self.date_id}.json")
                 file_results_aggregated.open("w", encoding="utf-8").write(dumped)
 

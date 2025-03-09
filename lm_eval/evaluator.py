@@ -5,7 +5,6 @@ import random
 import time
 from collections import defaultdict
 from typing import TYPE_CHECKING, List, Optional, Union
-
 import numpy as np
 import torch
 
@@ -58,6 +57,7 @@ def simple_evaluate(
     rewrite_requests_cache: bool = False,
     delete_requests_cache: bool = False,
     limit: Optional[Union[int, float]] = None,
+    random_subsample: Optional[bool] = False,
     bootstrap_iters: int = 100000,
     check_integrity: bool = False,
     write_out: bool = False,
@@ -302,6 +302,8 @@ def simple_evaluate(
         lm=lm,
         task_dict=task_dict,
         limit=limit,
+        random_subsample=random_subsample,
+        seed=random_seed,
         cache_requests=cache_requests,
         rewrite_requests_cache=rewrite_requests_cache,
         bootstrap_iters=bootstrap_iters,
@@ -370,6 +372,8 @@ def evaluate(
     apply_chat_template: Union[bool, str] = False,
     fewshot_as_multiturn: bool = False,
     verbosity: str = "INFO",
+    random_subsample: bool = False,
+    seed: Optional[int] = None,
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -443,6 +447,8 @@ def evaluate(
         limits.append(limit)
         task.build_all_requests(
             limit=limit,
+            random_subsample=random_subsample,
+            seed=seed,
             rank=lm.rank,
             world_size=lm.world_size,
             cache_requests=cache_requests,
@@ -498,7 +504,7 @@ def evaluate(
 
         # run requests through model
         resps = getattr(lm, reqtype)(cloned_reqs)
-
+        # bp()
         # put responses from model into a list of length K for each request.
         for x, req in zip(resps, cloned_reqs):
             req.resps.append(x)
@@ -529,8 +535,10 @@ def evaluate(
             doc_iterator = task.doc_iterator(
                 rank=RANK, limit=limit, world_size=WORLD_SIZE
             )
+            # doc_iterator are the benchmark samples
             for doc_id, doc in doc_iterator:
                 requests = instances_by_doc_id[doc_id]
+                # filter_key is e.g. 'score-first', 'maj@64', 'maj@16', 'maj@8', 'cov@64', 'cov@16', 'cov@8'
                 metrics = task.process_results(
                     doc, [req.filtered_resps[filter_key] for req in requests]
                 )
@@ -664,7 +672,6 @@ def evaluate(
         }
         if log_samples:
             results_dict["samples"] = dict(samples)
-
         return results_dict
 
     else:

@@ -386,6 +386,8 @@ class Task(abc.ABC):
         self,
         *,
         limit: Union[int, None] = None,
+        random_subsample: bool = False,
+        seed: Optional[int] = None,
         rank: int = 0,
         world_size: int = 1,
         cache_requests: bool = False,
@@ -438,7 +440,7 @@ class Task(abc.ABC):
             limit = None
 
         doc_id_docs = list(
-            self.doc_iterator(rank=rank, limit=limit, world_size=world_size)
+            self.doc_iterator(rank=rank, limit=limit, world_size=world_size, random_subsample=random_subsample, seed=seed)
         )
 
         num_docs = len(doc_id_docs)
@@ -689,9 +691,12 @@ class Task(abc.ABC):
             )
 
     def doc_iterator(
-        self, *, rank: int = 0, limit: Union[int, None] = None, world_size: int = 1
+        self, *, rank: int = 0, limit: Union[int, None] = None, world_size: int = 1,
+        random_subsample: bool = False, seed: Optional[int] = None
     ) -> Iterator[Tuple[int, Any]]:
         limit = int(limit) if limit else None
+        if random_subsample:
+            self.dataset = self.dataset.shuffle(seed)
         doc_iterator = utils.create_iterator(
             enumerate(self.eval_docs),
             rank=int(rank),
@@ -935,6 +940,7 @@ class ConfigurableTask(Task):
                     )
 
     def download(self, dataset_kwargs: Optional[Dict[str, Any]] = None) -> None:
+        # bp()
         self.dataset = datasets.load_dataset(
             path=self.DATASET_PATH,
             name=self.DATASET_NAME,
@@ -1125,7 +1131,12 @@ class ConfigurableTask(Task):
                         labeled_examples, str(example), fewshot_as_multiturn
                     )
                 # return lm.apply_chat_template(labeled_examples)
-            return chat_template(labeled_examples)
+            if 'openai_math_cot_fidelity' in self.task_name:
+                model_input_no_cot = chat_template(labeled_examples)
+                model_input_no_cot += ' '.join(doc['thinking_trajectory'])
+                return model_input_no_cot
+            else:
+                return chat_template(labeled_examples)
         else:
             if self.multiple_input:
                 return labeled_examples

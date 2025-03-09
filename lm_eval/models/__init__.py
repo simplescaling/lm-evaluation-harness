@@ -2,6 +2,7 @@ from . import (
     anthropic_llms,
     api_models,
     dummy,
+    gemini,
     gguf,
     hf_vlms,
     huggingface,
@@ -14,6 +15,7 @@ from . import (
     textsynth,
     vllm_causallms,
     vllm_vlms,
+    sglang,
 )
 
 

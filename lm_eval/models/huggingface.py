@@ -36,6 +36,10 @@ from lm_eval.models.utils import (
     stop_sequences_criteria,
 )
 
+if int(os.getenv("O1INFERENCE", 0)):
+    import sys
+    sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
+    from tot.o1_reabse_text import o1
 
 eval_logger = utils.eval_logger
 
@@ -238,7 +242,8 @@ class HFLM(TemplateLM):
                     # if not using HF Accelerate or device_map
                     # or any other option that preloads model onto device
                     try:
-                        self.model.to(self.device)
+                        #self.model.to(self.device)
+                        self.model.model.to(self.device)
                     except ValueError:
                         eval_logger.debug(
                             "Failed to place model onto specified device. This may be because the model is quantized via `bitsandbytes` or `device_map` is provided. If the desired GPU is being used, this message is safe to ignore."
@@ -567,14 +572,24 @@ class HFLM(TemplateLM):
                         model_kwargs["bnb_4bit_compute_dtype"] = get_dtype(
                             model_kwargs["bnb_4bit_compute_dtype"]
                         )
-
-            self._model = self.AUTO_MODEL_CLASS.from_pretrained(
-                pretrained,
-                revision=revision,
-                torch_dtype=get_dtype(dtype),
-                trust_remote_code=trust_remote_code,
-                **model_kwargs,
-            )
+            print("os.getenv(O1INFERENCE): ", os.getenv("O1INFERENCE", 0))
+            if int(os.getenv("O1INFERENCE", 0)):
+                print("use o1 inference")
+                step_eos = "<|reserved_special_token_2|>"
+                think_eos = "<|reserved_special_token_1|>"
+                answer_eos = "<|eot_id|>"
+                num_parallel_steps = int(os.getenv("O1INFERENCE_NUM_PARALLEL_STEPS", 1))
+                print(f"hardcoding the model to be o1; num_parallel_steps: {num_parallel_steps}")
+                self._model = o1.from_pretrained(pretrained, tokenizer=None, num_parallel_steps=num_parallel_steps, step_eos=step_eos, think_eos=think_eos, answer_eos=answer_eos).cuda()
+            else:
+                print("not use o1 inference")
+                self._model = self.AUTO_MODEL_CLASS.from_pretrained(
+                    pretrained,
+                    revision=revision,
+                    torch_dtype=get_dtype(dtype),
+                    trust_remote_code=trust_remote_code,
+                    **model_kwargs,
+                )
         else:
             try:
                 from auto_gptq import AutoGPTQForCausalLM
@@ -593,6 +608,8 @@ class HFLM(TemplateLM):
                 else autogptq.endswith(".safetensors"),
                 **model_kwargs,
             )
+
+            
 
         if peft and delta:
             raise ValueError(
@@ -844,10 +861,14 @@ class HFLM(TemplateLM):
 
         if do_sample is False and generation_kwargs.get("temperature") == 0.0:
             generation_kwargs.pop("temperature")
-        # build stopping criteria
-        stopping_criteria = stop_sequences_criteria(
-            self.tokenizer, stop, context.shape[1], context.shape[0]
-        )
+
+        if int(os.getenv("O1INFERENCE", 0)):
+            print("O1INFERENCE is set")
+            stopping_criteria = None
+        else:
+            stopping_criteria = stop_sequences_criteria(
+                self.tokenizer, stop, context.shape[1], context.shape[0]
+            )
         return self.model.generate(
             input_ids=context,
             max_length=max_length,
