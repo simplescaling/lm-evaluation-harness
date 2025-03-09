@@ -424,6 +424,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
         fewshot_random_seed=args.seed[3],
         bootstrap_iters=0,
         random_subsample=args.random_subsample,
+        confirm_run_unsafe_code=args.confirm_run_unsafe_code,
         **request_caching_args,
     )
 

@@ -20,12 +20,6 @@ eval_logger = logging.getLogger(__name__)
 def bypass_agg(arr):
     return -1
 
-@register_aggregation("mean_last30")
-def mean_last30(arr):
-    if len(arr) < 30:
-        print("Need >=30 items to calculate mean of last 30; returning -1")
-        return -1
-    return sum(arr[-30:]) / 30
 
 @register_aggregation("mean")
 def mean(arr):
