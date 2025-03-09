@@ -13,6 +13,8 @@ from lm_eval.evaluator_utils import get_subtask_list
 
 GROUP_ONLY_KEYS = list(GroupConfig().to_dict().keys())
 
+eval_logger = logging.getLogger(__name__)
+
 
 class TaskManager:
     """TaskManager indexes all tasks from the default `lm_eval/tasks/`
@@ -22,14 +24,13 @@ class TaskManager:
 
     def __init__(
         self,
-        verbosity="INFO",
+        verbosity: Optional[str] = None,
         include_path: Optional[Union[str, List]] = None,
         include_defaults: bool = True,
     ) -> None:
-        self.verbosity = verbosity
+        if verbosity is not None:
+            utils.setup_logging(verbosity)
         self.include_path = include_path
-        self.logger = utils.eval_logger
-        self.logger.setLevel(getattr(logging, f"{verbosity}"))
 
         self._task_index = self.initialize_tasks(
             include_path=include_path, include_defaults=include_defaults
@@ -443,31 +444,26 @@ class TaskManager:
 
         def _populate_tags_and_groups(config, task, tasks_and_groups, print_info):
             # TODO: remove group in next release
-            for attr in ["tag", "group"]:
-                if attr in config:
-                    if attr == "group" and print_info:
-                        print_info = False
-                        # attr = "tag"
+            if "tag" in config:
+                attr_list = config["tag"]
+                if isinstance(attr_list, str):
+                    attr_list = [attr_list]
 
-                    attr_list = config[attr]
-                    if isinstance(attr_list, str):
-                        attr_list = [attr_list]
-
-                    for tag in attr_list:
-                        if tag not in tasks_and_groups:
-                            tasks_and_groups[tag] = {
-                                "type": "tag",
-                                "task": [task],
-                                "yaml_path": -1,
-                            }
-                        elif tasks_and_groups[tag]["type"] != "tag":
-                            self.logger.info(
-                                f"The tag {tag} is already registered as a group, this tag will not be registered. "
-                                "This may affect tasks you want to call."
-                            )
-                            break
-                        else:
-                            tasks_and_groups[tag]["task"].append(task)
+                for tag in attr_list:
+                    if tag not in tasks_and_groups:
+                        tasks_and_groups[tag] = {
+                            "type": "tag",
+                            "task": [task],
+                            "yaml_path": -1,
+                        }
+                    elif tasks_and_groups[tag]["type"] != "tag":
+                        eval_logger.info(
+                            f"The tag '{tag}' is already registered as a group, this tag will not be registered. "
+                            "This may affect tasks you want to call."
+                        )
+                        break
+                    else:
+                        tasks_and_groups[tag]["task"].append(task)
 
         # TODO: remove group in next release
         print_info = True
@@ -524,7 +520,7 @@ class TaskManager:
                             config, task, tasks_and_groups, print_info
                         )
                     else:
-                        self.logger.debug(f"File {f} in {root} could not be loaded")
+                        eval_logger.debug(f"File {f} in {root} could not be loaded")
 
         return tasks_and_groups
 
