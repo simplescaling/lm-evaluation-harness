@@ -390,6 +390,7 @@ def evaluate(
     apply_chat_template: Union[bool, str] = False,
     fewshot_as_multiturn: bool = False,
     verbosity: str = "INFO",
+    confirm_run_unsafe_code: bool = False,
     random_subsample: bool = False,
     seed: Optional[int] = None,
 ):

@@ -1,4 +1,5 @@
 from collections import Counter
+import logging
 import os
 import re
 import signal
@@ -6,7 +7,7 @@ from typing import Dict, List, Optional
 
 import datasets
 
-from lm_eval.utils import eval_logger
+eval_logger = logging.getLogger(__name__)
 
 if os.getenv("PROMPTSTEP") is not None:
     QUERY_TEMPLATE = '{Question}\n\nThink for up to ' + os.getenv("PROMPTSTEP") + ' steps.'
