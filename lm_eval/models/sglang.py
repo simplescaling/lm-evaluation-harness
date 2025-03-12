@@ -12,12 +12,9 @@ from tqdm import tqdm
 from lm_eval.api.instance import Instance
 from lm_eval.api.model import TemplateLM
 from lm_eval.api.registry import register_model
+from lm_eval.evaluator_utils import eval_logger
 from lm_eval.models.utils import Collator, configure_pad_token, undistribute
-from lm_eval.utils import (
-    eval_logger,
-    get_rolling_token_windows,
-    make_disjoint_window,
-)
+from lm_eval.utils import get_rolling_token_windows, make_disjoint_window
 # check the path and import the o1 module: /home/weijias/o1/search/tot
 if os.path.exists("/home/weijias/o1/search/tot"):
     sys.path.append("/home/weijias/o1/search/tot")
@@ -42,8 +39,8 @@ if int(os.getenv("O1INFERENCE", 0)):
 eval_logger = eval_logger
 
 
-@register_model("sglang")
-class SGLang(TemplateLM):
+@register_model("sglangrebase")
+class SGLangREBASE(TemplateLM):
     _DEFAULT_MAX_LENGTH = 2048
 
     def __init__(
