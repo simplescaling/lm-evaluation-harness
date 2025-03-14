@@ -16,6 +16,7 @@ import numpy as np
 import yaml
 from jinja2 import BaseLoader, Environment, StrictUndefined
 
+eval_logger = logging.getLogger("lm-eval")
 
 SPACING = " " * 47
 

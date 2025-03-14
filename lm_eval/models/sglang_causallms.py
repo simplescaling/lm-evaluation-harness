@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     pass
 
 
-@register_model("sglang")
+@register_model("sglang-causal")
 class SGLangLM(TemplateLM):
     _DEFAULT_MAX_LENGTH = 2048
 
