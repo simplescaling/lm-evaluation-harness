@@ -4,13 +4,13 @@ from typing import Any, Dict, List, Tuple, Union
 
 from tqdm import tqdm
 
-from lm_eval import utils
+from lm_eval import evaluator_utils
 from lm_eval.api.model import LM
 from lm_eval.api.registry import register_model
 from lm_eval.models.utils import retry_on_specific_exceptions
 
 
-eval_logger = utils.eval_logger
+eval_logger = evaluator_utils.eval_logger
 
 
 def gemini_completion(
