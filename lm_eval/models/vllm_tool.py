@@ -17,6 +17,8 @@ from lm_eval.utils import (
     make_disjoint_window,
 )
 
+from google_retriever import python_interpreter, google_retriever
+
 
 try:
     import ray
@@ -224,6 +226,7 @@ class VLLMTool(TemplateLM):
         stop: Optional[List[str]] = None,
         **kwargs,
     ):
+        # s1 hack, generate thinking first
         if generate:
             kwargs = self.modify_gen_kwargs(kwargs)
 
@@ -288,7 +291,8 @@ class VLLMTool(TemplateLM):
                     outputs_thinking = [None] * len(requests_thinking)
                     i = 0
                     while True:
-                        outputs_tmp = self.model.generate(
+                        # outputs_tmp = self.model.generate(
+                        outputs_tmp = self._tool_generate(
                             prompt_token_ids=requests_thinking,
                             sampling_params=sampling_params,
                             use_tqdm=True if self.batch_size == "auto" else False,
@@ -336,7 +340,8 @@ class VLLMTool(TemplateLM):
                     requests_tmp = copy.deepcopy(requests)
                     indices = list(range(len(requests)))
                     for i in range(thinking_n_ignore):
-                        outputs_tmp = self.model.generate(
+                        # outputs_tmp = self.model.generate(
+                        outputs_tmp = self._tool_generate(
                             prompt_token_ids=requests_tmp,
                             sampling_params=sampling_params,
                             use_tqdm=True if self.batch_size == "auto" else False,
@@ -384,7 +389,8 @@ class VLLMTool(TemplateLM):
                             outputs_thinking[idx].outputs[0].token_ids = outputs_thinking[idx].outputs[0].token_ids[:sampling_params_thinking["max_tokens"]]
 
                 else:
-                    outputs_thinking = self.model.generate(
+                    # outputs_thinking = self.model.generate(
+                    outputs_thinking = self._tool_generate(
                         prompt_token_ids=requests,
                         sampling_params=sampling_params,
                         use_tqdm=True if self.batch_size == "auto" else False,
@@ -416,6 +422,8 @@ class VLLMTool(TemplateLM):
             sampling_params = SamplingParams(
                 temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False
             )
+        
+        # original lm_eval
         if self.data_parallel_size > 1:
             # vLLM hangs if tensor_parallel > 1 and resources are set in ray.remote
             # also seems to only work with decorator and not with ray.remote() fn
@@ -497,7 +505,7 @@ class VLLMTool(TemplateLM):
 
         return loglikelihoods
 
-    def _raw_generate_until(
+    def generate_until(
         self, requests: List[Instance], disable_tqdm: bool = False
     ) -> List[str]:
         res = []
@@ -609,60 +617,69 @@ class VLLMTool(TemplateLM):
         return re_ords.get_original(res)
     
     
-    def generate_until(
-        self, requests: List[Instance], disable_tqdm: bool = False
+    def _tool_generate(
+        self, prompt_token_ids, sampling_params: SamplingParams = None, use_tqdm=False,
     ) -> List[str]:
         
-    while True:
-        # Generate new output from LLM based on the current context
-        new_output = llm.generate(context,sampling_params)
-        # Append the new output to the context
-        context = context+new_output[0].outputs[0].text
-        # If the result token is present, process the code execution
-        last_python = context[prompt_idx:].rfind("<|im_start|>python")
-        last_retrieval = context[prompt_idx:].rfind("<|im_start|>retrieval")
-        last_result = context[prompt_idx:].rfind("<|im_start|>result")
-        if (last_result>last_python and last_result>last_retrieval) or (last_python==-1 and last_retrieval==-1):
-            context += '<|im_end|>'
-            break
+        
+        # outputs = self.model.generate(
+        #     prompt_token_ids=prompt_token_ids,
+        #     sampling_params=sampling_params,
+        #     use_tqdm=use_tqdm,
+        # )
+        sampling_params.stop.append('<|im_start|>result')
+        
+        while True:
+            # Generate new output from LLM based on the current context
+            
+            # new_output = llm.generate(context,sampling_params)
+            new_output = self.model.generate(
+                prompt_token_ids=prompt_token_ids,
+                sampling_params=sampling_params,
+                use_tqdm=use_tqdm,
+            )
+            
+            # Append the new output to the context
+            prompt_token_ids = prompt_token_ids + new_output[0].outputs[0].token_ids
+            # If the result token is present, process the code execution
+            last_python = context[prompt_idx:].rfind("<|im_start|>python")
+            last_retrieval = context[prompt_idx:].rfind("<|im_start|>retrieval")
+            last_result = context[prompt_idx:].rfind("<|im_start|>result")
+            if (last_result>last_python and last_result>last_retrieval) or (last_python==-1 and last_retrieval==-1):
+                context += '<|im_end|>'
+                break
 
-        context += '\n<|im_start|>result\n'
-        if last_python>last_retrieval:
+            context += '\n<|im_start|>result\n'
+            if last_python>last_retrieval:
+                
+                # Find the last occurrence of <im_start>python in the context
+                last_tool_index = context.rfind("<|im_start|>python")
+                result_index = context.rfind("<|im_start|>result")
+                
+                # Extract the code to run from context (between <im_start>python and <im_start>result)
+                code_to_run = context[last_tool_index + len("<|im_start|>python"):result_index]
+                
+                # Execute the code using the python_interpreter function and get the result
+                
+                new_code,execution_result = python_interpreter(code_to_run)
+                context = context[:last_tool_index]+new_code+'\n<|im_start|>result\n'+execution_result+"\n<|im_start|>continue\n"
+                
+            else:
             
-            # Find the last occurrence of <im_start>python in the context
-            last_tool_index = context.rfind("<|im_start|>python")
-            result_index = context.rfind("<|im_start|>result")
-            
-            # Extract the code to run from context (between <im_start>python and <im_start>result)
-            code_to_run = context[last_tool_index + len("<|im_start|>python"):result_index]
-            
-            # Execute the code using the python_interpreter function and get the result
-            
-            new_code,execution_result = python_interpreter(code_to_run)
-            context = context[:last_tool_index]+new_code+'\n<|im_start|>result\n'+execution_result+"\n<|im_start|>continue\n"
-            
-        else:
-        
-            # Find the last occurrence of <im_start>python in the context
-            last_tool_index = context.rfind("<|im_start|>retrieval")
-            result_index = context.rfind("<|im_start|>result")
-            
-            # Extract the code to run from context (between <im_start>python and <im_start>result)
-            query = context[last_tool_index + len("<|im_start|>retrieval\n"):result_index]
-            # Execute the code using the python_interpreter function and get the result
-            
-            execution_result = google_retriever(query)
-            # Insert the execution result right after the <im_start>result token in the context
-            insertion_point = result_index + len("<|im_start|>result\n")
-            context = context[:insertion_point] + execution_result.response + "\n<|im_start|>continue\n"
+                # Find the last occurrence of <im_start>python in the context
+                last_tool_index = context.rfind("<|im_start|>retrieval")
+                result_index = context.rfind("<|im_start|>result")
+                
+                # Extract the code to run from context (between <im_start>python and <im_start>result)
+                query = context[last_tool_index + len("<|im_start|>retrieval\n"):result_index]
+                # Execute the code using the python_interpreter function and get the result
+                
+                execution_result = google_retriever(query)
+                # Insert the execution result right after the <im_start>result token in the context
+                insertion_point = result_index + len("<|im_start|>result\n")
+                context = context[:insertion_point] + execution_result.response + "\n<|im_start|>continue\n"
 
-    return context
-        
-        
-        return self._raw_generate_until(requests=requests, disable_tqdm=disable_tqdm)
-    
-    
-    
+        return context
                                         
 
     def _loglikelihood_tokens(
