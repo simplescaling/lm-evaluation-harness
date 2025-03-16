@@ -17,7 +17,7 @@ from lm_eval.utils import (
     make_disjoint_window,
 )
 
-from google_retriever import python_interpreter, google_retriever
+from lm_eval.models.google_retriever import python_interpreter, google_retriever
 
 
 try:
@@ -181,13 +181,20 @@ class VLLMTool(TemplateLM):
     def max_gen_toks(self):
         return self._max_gen_toks
 
-    def apply_chat_template(self, chat_history: List[Dict[str, str]]) -> str:
+    def apply_chat_template(
+        self, chat_history: List[Dict[str, str]], add_generation_prompt: bool = True
+    ) -> str:
         """
         Method to apply a chat template to a list of chat history between user and model.
         """
-        return self.tokenizer.apply_chat_template(
-            chat_history, tokenize=False, add_generation_prompt=True
+        chat_templated = self.tokenizer.apply_chat_template(
+            chat_history,
+            tokenize=False,
+            add_generation_prompt=add_generation_prompt,
+            continue_final_message=not add_generation_prompt,
         )
+
+        return chat_templated
 
     @property
     def tokenizer_name(self) -> str:
@@ -217,6 +224,18 @@ class VLLMTool(TemplateLM):
                 encoding = encoding[-left_truncate_len:]
 
         return encoding
+    
+    def tok_decode(
+        self,
+        token_ids: Union[List[int], List[List[int]]],
+        skip_special_token: bool = False,
+    ) -> Union[str, List[str]]:
+
+        texts: Union[str, List[str]] = self.tokenizer.decode(
+            token_ids,
+            skip_special_tokens=skip_special_token,
+        )
+        return texts
 
     def _model_generate(
         self,
@@ -226,6 +245,10 @@ class VLLMTool(TemplateLM):
         stop: Optional[List[str]] = None,
         **kwargs,
     ):
+        # For aime2025,
+        # generate: True
+        # kwargs = {'do_sample': False, 'temperature': 0.0}
+        print(kwargs)
         # s1 hack, generate thinking first
         if generate:
             kwargs = self.modify_gen_kwargs(kwargs)
@@ -239,6 +262,7 @@ class VLLMTool(TemplateLM):
             outputs_thinking = None
             if any(["thinking" in k for k in kwargs]) or rejection_sample:
                 print("Separating thinking and answering generation.")
+                kwargs.pop("thinking", True)
                 thinking_start = kwargs.pop("thinking_start", "<|im_start|>think")
                 thinking_end = kwargs.pop("thinking_end", "<|im_start|>answer")
                 thinking_n_ignore = kwargs.pop("thinking_n_ignore", None)
@@ -627,7 +651,16 @@ class VLLMTool(TemplateLM):
         #     sampling_params=sampling_params,
         #     use_tqdm=use_tqdm,
         # )
+        print("stopping here to debug!")
+        import IPython; IPython.embed()
+        
         sampling_params.stop.append('<|im_start|>result')
+        
+        prompt_text = self.tok_decode(prompt_token_ids)
+        
+        prompt_len = len(prompt_text)
+        
+        context = "" + prompt_text
         
         while True:
             # Generate new output from LLM based on the current context
@@ -640,11 +673,11 @@ class VLLMTool(TemplateLM):
             )
             
             # Append the new output to the context
-            prompt_token_ids = prompt_token_ids + new_output[0].outputs[0].token_ids
+            context = context + new_output[0].outputs[0].text
             # If the result token is present, process the code execution
-            last_python = context[prompt_idx:].rfind("<|im_start|>python")
-            last_retrieval = context[prompt_idx:].rfind("<|im_start|>retrieval")
-            last_result = context[prompt_idx:].rfind("<|im_start|>result")
+            last_python = context[prompt_len:].rfind("<|im_start|>python")
+            last_retrieval = context[prompt_len:].rfind("<|im_start|>retrieval")
+            last_result = context[prompt_len:].rfind("<|im_start|>result")
             if (last_result>last_python and last_result>last_retrieval) or (last_python==-1 and last_retrieval==-1):
                 context += '<|im_end|>'
                 break
