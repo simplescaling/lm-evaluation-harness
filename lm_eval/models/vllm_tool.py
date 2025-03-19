@@ -231,7 +231,7 @@ class VLLMTool(TemplateLM):
         skip_special_token: bool = False,
     ) -> Union[str, List[str]]:
 
-        texts: Union[str, List[str]] = self.tokenizer.decode(
+        texts: Union[str, List[str]] = self.tokenizer.batch_decode(
             token_ids,
             skip_special_tokens=skip_special_token,
         )
@@ -419,27 +419,35 @@ class VLLMTool(TemplateLM):
                         sampling_params=sampling_params,
                         use_tqdm=True if self.batch_size == "auto" else False,
                     )
+                    
+                if isinstance(outputs_thinking, dict):
+                    # called _tool_generate
+                    for i in range(len(outputs_thinking['ids'])):
+                        requests[i] = outputs_thinking['ids'][i] + thinking_end_max_tok
+                        outputs_thinking['text'][i] = outputs_thinking['text'][i] + thinking_end_max
+                        # print(f"Request {i}", self.tok_decode(requests[i]))
+                    
+                else:
+                    for i, o in enumerate(outputs_thinking):
+                        assert len(o.outputs) == 1
+                        cont = list(o.outputs[0].token_ids)
+                        # When using `stop`, the stop text will not be in the text, but still in the token_ids so remove it
+                        for toks in until_thinking_tok:
+                            if cont[-len(toks):] == toks:
+                                cont = cont[:-len(toks)]
 
-                for i, o in enumerate(outputs_thinking):
-                    assert len(o.outputs) == 1
-                    cont = list(o.outputs[0].token_ids)
-                    # When using `stop`, the stop text will not be in the text, but still in the token_ids so remove it
-                    for toks in until_thinking_tok:
-                        if cont[-len(toks):] == toks:
-                            cont = cont[:-len(toks)]
-
-                    if o.outputs[0].finish_reason == "length":
-                        assert not rejection_sample, "Rejection sampling should not reach this point."
-                        # \n appears a lot so a decent chance it happend to just be the last token in which case we don't need to add a newline
-                        if (o.outputs[0].text[-1] == "\n") or (thinking_start[0] == "\n"):
-                            requests[i] += cont + thinking_end_max_tok
-                            outputs_thinking[i].outputs[0].text = thinking_start + outputs_thinking[i].outputs[0].text + thinking_end_max
+                        if o.outputs[0].finish_reason == "length":
+                            assert not rejection_sample, "Rejection sampling should not reach this point."
+                            # \n appears a lot so a decent chance it happend to just be the last token in which case we don't need to add a newline
+                            if (o.outputs[0].text[-1] == "\n") or (thinking_start[0] == "\n"):
+                                requests[i] += cont + thinking_end_max_tok
+                                outputs_thinking[i].outputs[0].text = thinking_start + outputs_thinking[i].outputs[0].text + thinking_end_max
+                            else:
+                                requests[i] += cont + newline_tok + thinking_end_max_tok
+                                outputs_thinking[i].outputs[0].text = thinking_start + outputs_thinking[i].outputs[0].text + "\n" + thinking_end_max
                         else:
-                            requests[i] += cont + newline_tok + thinking_end_max_tok
-                            outputs_thinking[i].outputs[0].text = thinking_start + outputs_thinking[i].outputs[0].text + "\n" + thinking_end_max
-                    else:
-                        requests[i] += cont + thinking_end_tok
-                        outputs_thinking[i].outputs[0].text = thinking_start + outputs_thinking[i].outputs[0].text + thinking_end
+                            requests[i] += cont + thinking_end_tok
+                            outputs_thinking[i].outputs[0].text = thinking_start + outputs_thinking[i].outputs[0].text + thinking_end
 
             sampling_params = SamplingParams(max_tokens=max_tokens, stop=stop, **kwargs)
         else:
@@ -488,9 +496,15 @@ class VLLMTool(TemplateLM):
                 use_tqdm=True if self.batch_size == "auto" else False,
             )
             if outputs_thinking is not None:
-                for i, o in enumerate(outputs):
-                    assert len(o.outputs) == 1
-                    outputs[i].outputs[0].text = outputs_thinking[i].outputs[0].text + outputs[i].outputs[0].text
+                if isinstance(outputs_thinking, dict):
+                    for i, o in enumerate(outputs):
+                        assert len(o.outputs) == 1
+                        outputs[i].outputs[0].text = outputs_thinking['text'][i] + outputs[i].outputs[0].text
+                else: 
+                    for i, o in enumerate(outputs):
+                        assert len(o.outputs) == 1
+                        outputs[i].outputs[0].text = outputs_thinking[i].outputs[0].text + outputs[i].outputs[0].text
+        print(outputs)
         return outputs
 
     def loglikelihood_rolling(
@@ -651,68 +665,89 @@ class VLLMTool(TemplateLM):
         #     sampling_params=sampling_params,
         #     use_tqdm=use_tqdm,
         # )
-        print("stopping here to debug!")
-        import IPython; IPython.embed()
         
         sampling_params.stop.append('<|im_start|>result')
+        print("Stopping tokens: ", sampling_params.stop)
         
         prompt_text = self.tok_decode(prompt_token_ids)
         
-        prompt_len = len(prompt_text)
+        context_todo = {}
         
-        context = "" + prompt_text
+        for i in range(len(prompt_text)):
+            context_todo[f"{i}"] = prompt_text[i]
         
-        while True:
+        
+        context_results = [None] * len(prompt_text)
+        
+        print("batch size is", len(prompt_text))
+        
+        while len(context_todo) > 0:
             # Generate new output from LLM based on the current context
-            
-            # new_output = llm.generate(context,sampling_params)
+            todo_token_ids = [self.tok_encode(context_todo[key]) for key in context_todo.keys()]
+            print(f"calling vllm engine with {len(todo_token_ids)}")
+            # print(todo_token_ids)
+            # print(context_todo)
             new_output = self.model.generate(
-                prompt_token_ids=prompt_token_ids,
+                prompt_token_ids=todo_token_ids,
                 sampling_params=sampling_params,
-                use_tqdm=use_tqdm,
+                use_tqdm=True,
             )
             
-            # Append the new output to the context
-            context = context + new_output[0].outputs[0].text
-            # If the result token is present, process the code execution
-            last_python = context[prompt_len:].rfind("<|im_start|>python")
-            last_retrieval = context[prompt_len:].rfind("<|im_start|>retrieval")
-            last_result = context[prompt_len:].rfind("<|im_start|>result")
-            if (last_result>last_python and last_result>last_retrieval) or (last_python==-1 and last_retrieval==-1):
-                context += '<|im_end|>'
-                break
-
-            context += '\n<|im_start|>result\n'
-            if last_python>last_retrieval:
-                
-                # Find the last occurrence of <im_start>python in the context
-                last_tool_index = context.rfind("<|im_start|>python")
-                result_index = context.rfind("<|im_start|>result")
-                
-                # Extract the code to run from context (between <im_start>python and <im_start>result)
-                code_to_run = context[last_tool_index + len("<|im_start|>python"):result_index]
-                
-                # Execute the code using the python_interpreter function and get the result
-                
-                new_code,execution_result = python_interpreter(code_to_run)
-                context = context[:last_tool_index]+new_code+'\n<|im_start|>result\n'+execution_result+"\n<|im_start|>continue\n"
-                
-            else:
+            if len(prompt_text) != len(context_todo):
+                import IPython; IPython.embed()
             
-                # Find the last occurrence of <im_start>python in the context
-                last_tool_index = context.rfind("<|im_start|>retrieval")
-                result_index = context.rfind("<|im_start|>result")
+            num_requests = len(context_todo)
+            for i in range(num_requests-1, -1, -1):
+                key = list(context_todo.keys())[i]
+                prompt_len = len(prompt_text[i])
                 
-                # Extract the code to run from context (between <im_start>python and <im_start>result)
-                query = context[last_tool_index + len("<|im_start|>retrieval\n"):result_index]
-                # Execute the code using the python_interpreter function and get the result
-                
-                execution_result = google_retriever(query)
-                # Insert the execution result right after the <im_start>result token in the context
-                insertion_point = result_index + len("<|im_start|>result\n")
-                context = context[:insertion_point] + execution_result.response + "\n<|im_start|>continue\n"
+                # Append the new output to the context
+                context_todo[key] = context_todo[key] + new_output[i].outputs[0].text
 
-        return context
+                # If the result token is present, process the code execution
+                last_python = context_todo[key][prompt_len:].rfind("<|im_start|>python")
+                last_retrieval = context_todo[key][prompt_len:].rfind("<|im_start|>retrieval")
+                last_result = context_todo[key][prompt_len:].rfind("<|im_start|>result")
+                if (last_result>last_python and last_result>last_retrieval) or (last_python==-1 and last_retrieval==-1):
+                    context_todo[key] += '<|im_end|>'
+                    context_results[int(key)] = context_todo.pop(key)
+                    # print(f"Finished for prompt No.{int(key)}", context_results[int(key)])
+                    continue
+
+                context_todo[key] += '\n<|im_start|>result\n'
+                
+                if last_python>last_retrieval:
+                    # Find the last occurrence of <im_start>python in the context
+                    last_tool_index = context_todo[key].rfind("<|im_start|>python")
+                    result_index = context_todo[key].rfind("<|im_start|>result")
+                    
+                    # Extract the code to run from context (between <im_start>python and <im_start>result)
+                    code_to_run = context_todo[key][last_tool_index + len("<|im_start|>python"):result_index]
+                    
+                    # Execute the code using the python_interpreter function and get the result
+                    
+                    new_code,execution_result = python_interpreter(code_to_run)
+                    context_todo[key] = context_todo[key][:last_tool_index]+new_code+'\n<|im_start|>result\n'+execution_result+"\n<|im_start|>continue\n"
+                    
+                else:
+                
+                    # Find the last occurrence of <im_start>python in the context
+                    last_tool_index = context_todo[key].rfind("<|im_start|>retrieval")
+                    result_index = context_todo[key].rfind("<|im_start|>result")
+                    
+                    # Extract the code to run from context (between <im_start>python and <im_start>result)
+                    query = context_todo[key][last_tool_index + len("<|im_start|>retrieval\n"):result_index]
+                    # Execute the code using the python_interpreter function and get the result
+                    
+                    execution_result = google_retriever(query)
+                    # Insert the execution result right after the <im_start>result token in the context
+                    insertion_point = result_index + len("<|im_start|>result\n")
+                    context_todo[key] = context_todo[key][:insertion_point] + execution_result.response + "\n<|im_start|>continue\n"
+
+        return {
+            "text": context_results,
+            "ids": [self.tok_encode(context) for context in context_results]
+        }
                                         
 
     def _loglikelihood_tokens(
