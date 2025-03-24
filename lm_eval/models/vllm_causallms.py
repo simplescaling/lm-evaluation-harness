@@ -604,6 +604,11 @@ class VLLM(TemplateLM):
                 max_gen_toks = kwargs.pop("max_gen_toks")
             else:
                 max_gen_toks = self.max_gen_toks
+            
+            if max_gen_toks > self.max_length:
+                raise ValueError(
+                    f"max_gen_toks ({max_gen_toks}) must be less than or equal to max_length ({self.max_length})"
+                )
 
             # set the max length in tokens of inputs ("context_enc")
             # max len for inputs = max length, minus room to generate the max new tokens
