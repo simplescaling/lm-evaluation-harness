@@ -16,12 +16,30 @@ generation_kwargs:
   max_gen_toks: 32768
 repeats: 64
 filter_list:
-  - name: "all" # Will do coverage, majority, and take_first_k
+  - name: "all" # Will do average, coverage, majority, and take_first_k
     filter:
       - function: "take_first_k"
         k: 64
 metric_list:
   - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@2
     aggregation: mean
     higher_is_better: true
   - metric: cov@64

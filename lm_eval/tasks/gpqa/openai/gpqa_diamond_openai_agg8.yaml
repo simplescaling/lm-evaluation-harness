@@ -1,7 +1,7 @@
 dataset_path: Idavidrein/gpqa
 tag: gpqa
 dataset_name: gpqa_diamond
-task: gpqa_diamond_openai_agg64
+task: gpqa_diamond_openai_agg8
 output_type: generate_until
 process_docs: !function utils.process_docs
 process_results: !function utils.process_results
@@ -34,23 +34,14 @@ generation_kwargs:
   do_sample: false
   temperature: 1 # Do 0.5? https://github.com/openai/simple-evals/blob/c0dba4c7bfbc17f786aec7bd7c3585a36ad81f23/sampler/chat_completion_sampler.py#L26
   max_gen_toks: 1024 # https://github.com/openai/simple-evals/blob/c0dba4c7bfbc17f786aec7bd7c3585a36ad81f23/sampler/chat_completion_sampler.py#L27
-repeats: 64
+repeats: 8
 filter_list:
   - name: "all" # Will do coverage, majority, and take_first_k
     filter:
       - function: "take_first_k"
-        k: 64
+        k: 8
 metric_list:
   - metric: exact_match
-    aggregation: mean
-    higher_is_better: true
-  - metric: avg@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: avg@32
-    aggregation: mean
-    higher_is_better: true
-  - metric: avg@16
     aggregation: mean
     higher_is_better: true
   - metric: avg@8
@@ -62,15 +53,6 @@ metric_list:
   - metric: avg@2
     aggregation: mean
     higher_is_better: true
-  - metric: cov@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: cov@32
-    aggregation: mean
-    higher_is_better: true
-  - metric: cov@16
-    aggregation: mean
-    higher_is_better: true
   - metric: cov@8
     aggregation: mean
     higher_is_better: true
@@ -78,15 +60,6 @@ metric_list:
     aggregation: mean
     higher_is_better: true
   - metric: cov@2
-    aggregation: mean
-    higher_is_better: true
-  - metric: maj@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: maj@32
-    aggregation: mean
-    higher_is_better: true
-  - metric: maj@16
     aggregation: mean
     higher_is_better: true
   - metric: maj@8

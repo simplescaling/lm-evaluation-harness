@@ -251,6 +251,7 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
             "exact_matches": [],
             **{f"cov@{n}": -1 for n in n_res_list},
             **{f"maj@{n}": -1 for n in n_res_list},
+            **{f"avg@{n}": -1 for n in n_res_list},
         }
 
     if os.getenv("PROCESSOR", "") == "gpt-4o-mini":
@@ -279,6 +280,10 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
         # re.DOTALL is key such that newlines are included e.g. if it does `Answer: Here is the solution:\n\n10`
         elif (matches := re.findall(ANSWER_PATTERN, a, re.DOTALL)) != []:
             a = matches[-1]  # Get the last match
+
+        # Limit to last 4300 characters as this is the usual max for string to int conversion (sys.get_int_max_str_digits)
+        # & anything before the final 4.3K chars is likely not the answer, saves some API credits, and makes it faster
+        a = a[-4300:]
 
         if (a.isdigit()) and (gt.isdigit()):
             a = str(int(a)) # 023 -> 23
@@ -316,6 +321,7 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
             if i in n_res_list:
                 metrics[f"cov@{i}"] = int(1 in metrics["exact_matches"])
                 metrics[f"maj@{i}"] = int(gt == Counter(metrics["extracted_answers"]).most_common(1)[0][0])
+                metrics[f"avg@{i}"] = sum(metrics["exact_matches"]) / i
 
     return metrics
 
