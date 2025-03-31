@@ -1,4 +1,5 @@
 import copy
+import time
 from importlib.metadata import version
 from importlib.util import find_spec
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
@@ -504,7 +505,7 @@ class VLLMTool(TemplateLM):
                     for i, o in enumerate(outputs):
                         assert len(o.outputs) == 1
                         outputs[i].outputs[0].text = outputs_thinking[i].outputs[0].text + outputs[i].outputs[0].text
-        print(outputs)
+        # print(outputs)
         return outputs
 
     def loglikelihood_rolling(
@@ -725,8 +726,10 @@ class VLLMTool(TemplateLM):
                     code_to_run = context_todo[key][last_tool_index + len("<|im_start|>python"):result_index]
                     
                     # Execute the code using the python_interpreter function and get the result
-                    
+                    tool_start = time.time()
                     new_code,execution_result = python_interpreter(code_to_run)
+                    tool_duration = time.time() - tool_start
+                    print(f"[Time] Python tool call took {tool_duration:.2f} seconds")
                     context_todo[key] = context_todo[key][:last_tool_index]+new_code+'\n<|im_start|>result\n'+execution_result+"\n<|im_start|>continue\n"
                     
                 else:
@@ -738,8 +741,10 @@ class VLLMTool(TemplateLM):
                     # Extract the code to run from context (between <im_start>python and <im_start>result)
                     query = context_todo[key][last_tool_index + len("<|im_start|>retrieval\n"):result_index]
                     # Execute the code using the python_interpreter function and get the result
-                    
+                    tool_start = time.time()
                     execution_result = google_retriever(query)
+                    tool_duration = time.time() - tool_start
+                    print(f"[Time] Retrieval tool call took {tool_duration:.2f} seconds")
                     # Insert the execution result right after the <im_start>result token in the context
                     insertion_point = result_index + len("<|im_start|>result\n")
                     context_todo[key] = context_todo[key][:insertion_point] + execution_result.response + "\n<|im_start|>continue\n"

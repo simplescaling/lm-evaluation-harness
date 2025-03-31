@@ -330,11 +330,7 @@ class SGLangLM(TemplateLM):
                 kwargs.pop("thinking", True)
                 thinking_start = kwargs.pop("thinking_start", "<|im_start|>think")
                 thinking_end = kwargs.pop("thinking_end", "<|im_start|>answer")
-                thinking_n_ignore = kwargs.pop("thinking_n_ignore", None)
-                thinking_n_ignore_str = kwargs.pop("thinking_n_ignore_str", None) # e.g. "Let me double check step-by-step.")
-                if thinking_n_ignore_str is not None:
-                    print(f"Thinking ignore string: {thinking_n_ignore_str}")
-                    thinking_n_ignore_str_tok = self.tok_encode(thinking_n_ignore_str)
+                
                 until_thinking = [kwargs.pop("until_thinking", "<|im_start|>")]
                 if "until_thinking_2" in kwargs:
                     until_thinking.append(kwargs.pop("until_thinking_2"))
@@ -357,6 +353,7 @@ class SGLangLM(TemplateLM):
             sampling_params = {
                 "max_new_tokens": max_tokens,
                 "stop": stop,
+                "stream": True,
             }
             sampling_params.update(kwargs)
         else:
