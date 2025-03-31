@@ -1450,9 +1450,9 @@ class ConfigurableTask(Task):
             **kwargs,
         )
 
-    def process_results(self, doc, results):
+    def process_results(self, doc, results, **kwargs):
         if callable(self.config.process_results):
-            return self.config.process_results(doc, results)
+            return self.config.process_results(doc, results, **kwargs)
 
         result_dict = {}
         use_metric = list(self._metric_fn_list.keys())

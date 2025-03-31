@@ -573,10 +573,17 @@ def evaluate(
             # doc_iterator are the benchmark samples
             for doc_id, doc in doc_iterator:
                 requests = instances_by_doc_id[doc_id]
-                # filter_key is e.g. 'score-first', 'maj@64', 'maj@16', 'maj@8', 'cov@64', 'cov@16', 'cov@8'
-                metrics = task.process_results(
-                    doc, [req.filtered_resps[filter_key] for req in requests]
-                )
+                if "tok@1" in task_output.task._metric_fn_list:
+                    metrics = task.process_results(
+                        doc,
+                        [req.filtered_resps[filter_key] for req in requests],
+                        tokenizer=lm.tokenizer,
+                        max_len=task_output.task_config["generation_kwargs"]["max_gen_toks"],
+                    )
+                else:
+                    metrics = task.process_results(
+                        doc, [req.filtered_resps[filter_key] for req in requests]
+                    )
                 if log_samples:
                     target = task.doc_to_target(doc)
                     example = {

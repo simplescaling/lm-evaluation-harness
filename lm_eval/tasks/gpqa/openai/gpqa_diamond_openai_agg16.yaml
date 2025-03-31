@@ -80,11 +80,82 @@ metric_list:
   - metric: maj@2
     aggregation: mean
     higher_is_better: true
+  - metric: tok_think@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1
+    aggregation: mean
+  - metric: too_long@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1
+    aggregation: mean
+    higher_is_better: true
   - metric: extracted_answers
     aggregation: bypass
     higher_is_better: true
+  - metric: tok
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long
+    aggregation: meanlist
+    higher_is_better: true    
   - metric: exact_matches
-    aggregation: bypass
+    aggregation: meanlist
     higher_is_better: true
 metadata:
   version: 1.0

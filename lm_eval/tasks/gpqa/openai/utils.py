@@ -67,7 +67,12 @@ def extract_answer(sampler, question: str, attempt: str):
    response = sampler([dict(content=prompt, role="user")])
    return response
 
-def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
+def process_results(
+    doc: dict, 
+    results: List[str],
+    tokenizer = None,
+    max_len = 32768,
+) -> Dict[str, int]:
     metrics = {"exact_match": None, "extracted_answers": []}
     # Multiple results -> we are measuring cov/maj etc
     if isinstance(results[0], list):
@@ -81,11 +86,37 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, int]:
             **{f"maj@{n}": -1 for n in n_res_list},
             **{f"avg@{n}": -1 for n in n_res_list},
         }
+    if tokenizer is not None:
+        n_stats_list = [1]
+        if "n_res_list" in locals():
+            n_stats_list.extend(n_res_list)
+
+        metrics = {
+            **metrics,
+            **{"tok": [], "tok_think": [], "tok_ans": [], "too_long": []},
+            **{f"tok@{n}": -1 for n in n_stats_list},
+            **{f"tok_think@{n}": -1 for n in n_stats_list},
+            **{f"tok_ans@{n}": -1 for n in n_stats_list},
+            **{f"too_long@{n}": -1 for n in n_stats_list},
+        }
 
     sampler = ChatCompletionSampler(model="gpt-4o-mini")
     question = QUERY_TEMPLATE_API.format(Question=doc["Question"], choice1=doc["choice1"], choice2=doc["choice2"], choice3=doc["choice3"], choice4=doc["choice4"])
+    SEP = os.getenv("SEP", "</think>")
     for i, a in enumerate(results, start=1):
-        a = clean(a, sep="</think>")
+        if tokenizer is not None:
+            parts = a.split(SEP, 1)
+            metrics["tok_think"].append(len(tokenizer.tokenize(parts[0])))
+            metrics["tok_ans"].append(0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1])))
+            metrics["tok"].append(len(tokenizer.tokenize(a)))
+            metrics["too_long"].append(metrics["tok"][-1] >= max_len)
+            if i in n_stats_list:
+                metrics[f"tok@{i}"] = sum(metrics["tok"]) / len(metrics["tok"])
+                metrics[f"tok_think@{i}"] = sum(metrics["tok_think"]) / len(metrics["tok_think"])
+                metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(metrics["tok_ans"])
+                metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(metrics["too_long"])
+
+        a = clean(a, sep=SEP)
 
         if a in ["a", "b", "c", "d"]:
             a = a.upper()

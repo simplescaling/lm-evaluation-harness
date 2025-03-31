@@ -21,6 +21,11 @@ def bypass_agg(arr):
     return -1
 
 
+@register_aggregation("meanlist")
+def meanlist(arr):
+    return [sum([float(y) for y in x]) / len(x) for x in arr]
+
+
 @register_aggregation("mean")
 def mean(arr):
     return sum(arr) / len(arr)

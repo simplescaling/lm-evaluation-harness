@@ -5,11 +5,20 @@ from tqdm import tqdm
 from lm_eval.api.model import LM
 from lm_eval.api.registry import register_model
 
+class DummyTokenizer:
+    def __init__(self):
+        pass
+    
+    def tokenize(self, text):
+        return text.split()
+
 
 @register_model("dummy")
 class DummyLM(LM):
     def __init__(self) -> None:
         super().__init__()
+        self.tokenizer = DummyTokenizer()
+        self.max_length = 1
 
     @classmethod
     def create_from_arg_string(cls, arg_string, additional_config=None):
