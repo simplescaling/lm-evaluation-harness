@@ -4,6 +4,7 @@ from . import (
     dummy,
     gemini,
     gguf,
+    hf_audiolm,
     hf_steered,
     hf_vlms,
     huggingface,
