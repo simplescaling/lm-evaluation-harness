@@ -208,6 +208,7 @@ class VLLMTool(TemplateLM):
         add_special_tokens: bool = False,
         truncation: bool = False,
     ) -> Union[List[int], List[List[int]]]:
+        
         if not add_special_tokens:
             add_special_tokens = False or self.add_bos_token
         encoding: Union[List[List[int]], List[int]] = self.tokenizer(
@@ -264,14 +265,14 @@ class VLLMTool(TemplateLM):
             if any(["thinking" in k for k in kwargs]) or rejection_sample:
                 print("Separating thinking and answering generation.")
                 kwargs.pop("thinking", True)
-                thinking_start = kwargs.pop("thinking_start", "<|im_start|>think")
-                thinking_end = kwargs.pop("thinking_end", "<|im_start|>answer")
+                thinking_start = kwargs.pop("thinking_start", "<think>")
+                thinking_end = kwargs.pop("thinking_end", "<think\>")
                 thinking_n_ignore = kwargs.pop("thinking_n_ignore", None)
                 thinking_n_ignore_str = kwargs.pop("thinking_n_ignore_str", None) # e.g. "Let me double check step-by-step.")
                 if thinking_n_ignore_str is not None:
                     print(f"Thinking ignore string: {thinking_n_ignore_str}")
                     thinking_n_ignore_str_tok = self.tok_encode(thinking_n_ignore_str)
-                until_thinking = [kwargs.pop("until_thinking", "<|im_start|>")]
+                until_thinking = [kwargs.pop("until_thinking", "<result>")]
                 if "until_thinking_2" in kwargs:
                     until_thinking.append(kwargs.pop("until_thinking_2"))
                 if stop is not None:
@@ -667,16 +668,14 @@ class VLLMTool(TemplateLM):
         #     use_tqdm=use_tqdm,
         # )
         
-        sampling_params.stop.append('<|im_start|>result')
+        sampling_params.stop.append('<result>')
         print("Stopping tokens: ", sampling_params.stop)
         
         prompt_text = self.tok_decode(prompt_token_ids)
-        
         context_todo = {}
         
         for i in range(len(prompt_text)):
             context_todo[f"{i}"] = prompt_text[i]
-        
         
         context_results = [None] * len(prompt_text)
         
@@ -706,49 +705,51 @@ class VLLMTool(TemplateLM):
                 context_todo[key] = context_todo[key] + new_output[i].outputs[0].text
 
                 # If the result token is present, process the code execution
-                last_python = context_todo[key][prompt_len:].rfind("<|im_start|>python")
-                last_retrieval = context_todo[key][prompt_len:].rfind("<|im_start|>retrieval")
-                last_result = context_todo[key][prompt_len:].rfind("<|im_start|>result")
+                last_python = context_todo[key][prompt_len:].rfind("<python>")
+                last_retrieval = context_todo[key][prompt_len:].rfind("<retrieval>")
+                last_result = context_todo[key][prompt_len:].rfind("<result>")
                 if (last_result>last_python and last_result>last_retrieval) or (last_python==-1 and last_retrieval==-1):
-                    context_todo[key] += '<|im_end|>'
+                    context_todo[key] += '<\think>'
                     context_results[int(key)] = context_todo.pop(key)
                     # print(f"Finished for prompt No.{int(key)}", context_results[int(key)])
                     continue
 
-                context_todo[key] += '\n<|im_start|>result\n'
+                context_todo[key] += '\n<result>\n'
                 
                 if last_python>last_retrieval:
+                    print('Using python')
                     # Find the last occurrence of <im_start>python in the context
-                    last_tool_index = context_todo[key].rfind("<|im_start|>python")
-                    result_index = context_todo[key].rfind("<|im_start|>result")
+                    last_tool_index = context_todo[key].rfind("<python>")
+                    result_index = context_todo[key].rfind("<result>")
                     
                     # Extract the code to run from context (between <im_start>python and <im_start>result)
-                    code_to_run = context_todo[key][last_tool_index + len("<|im_start|>python"):result_index]
+                    code_to_run = context_todo[key][last_tool_index + len("<python>"):result_index]
                     
                     # Execute the code using the python_interpreter function and get the result
                     tool_start = time.time()
                     new_code,execution_result = python_interpreter(code_to_run)
                     tool_duration = time.time() - tool_start
+                    breakpoint()
                     print(f"[Time] Python tool call took {tool_duration:.2f} seconds")
-                    context_todo[key] = context_todo[key][:last_tool_index]+new_code+'\n<|im_start|>result\n'+execution_result+"\n<|im_start|>continue\n"
+                    context_todo[key] = context_todo[key][:last_tool_index]+new_code+'\n<result>\n'+execution_result+"\n<continue>\n"
                     
                 else:
-                
+                    print('Using retrieval')
                     # Find the last occurrence of <im_start>python in the context
-                    last_tool_index = context_todo[key].rfind("<|im_start|>retrieval")
-                    result_index = context_todo[key].rfind("<|im_start|>result")
+                    last_tool_index = context_todo[key].rfind("<retrieval>")
+                    result_index = context_todo[key].rfind("<result>")
                     
                     # Extract the code to run from context (between <im_start>python and <im_start>result)
-                    query = context_todo[key][last_tool_index + len("<|im_start|>retrieval\n"):result_index]
+                    query = context_todo[key][last_tool_index + len("<retrieval>\n"):result_index]
                     # Execute the code using the python_interpreter function and get the result
                     tool_start = time.time()
                     execution_result = google_retriever(query)
                     tool_duration = time.time() - tool_start
                     print(f"[Time] Retrieval tool call took {tool_duration:.2f} seconds")
                     # Insert the execution result right after the <im_start>result token in the context
-                    insertion_point = result_index + len("<|im_start|>result\n")
-                    context_todo[key] = context_todo[key][:insertion_point] + execution_result.response + "\n<|im_start|>continue\n"
-
+                    insertion_point = result_index + len("<result>\n")
+                    context_todo[key] = context_todo[key][:insertion_point] + execution_result.response + "\n<continue>\n"
+        print("Finished all requests")
         return {
             "text": context_results,
             "ids": [self.tok_encode(context) for context in context_results]
