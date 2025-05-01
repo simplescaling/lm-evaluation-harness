@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Dict, List, Optional
 
-from simpleverify import verify
+from simpleverify import verify_generic
 from datasets import Dataset
 
 eval_logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ def process_results(
                 metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(metrics["tok_ans"])
                 metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(metrics["too_long"])
 
-        match, x, y = verify(a, gt, sep=SEP)[0]
+        match, x, y = verify_generic(a, gt, sep=SEP)[0]
         metrics["extracted_answers"].append(gt if match else x)
         if not(match): # Optional logging
             print("Marked incorrect\na " + metrics["extracted_answers"][-1] + "\ndoc['answer'] " + gt)
