@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import random
 import re
 
-from simpleverify.verify import clean, ChatCompletionSampler
+from simpleverify.verify_generic import clean, ChatCompletionSampler
 import datasets
 
 QUERY_TEMPLATE = "{Question}\n\nA) {choice1}\nB) {choice2}\nC) {choice3}\nD) {choice4}"
