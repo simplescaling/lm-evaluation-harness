@@ -175,15 +175,16 @@ def process_results(
                     a = "A"
 
             metrics["extracted_answers"].append(a)
+            match = a == doc["answer"]
             a = int(a == doc["answer"])
             if not(a): # Optional logging
                 print("Marked incorrect\na " + metrics["extracted_answers"][-1] + "\ndoc['answer'] " + doc["answer"])
             if i == 1:
-                metrics["exact_match"] = a
+                metrics["exact_match"] = match
                 if "exact_matches" in metrics:
-                    metrics["exact_matches"].append(a)
+                    metrics["exact_matches"].append(match)
             elif i > 1:
-                metrics["exact_matches"].append(a)
+                metrics["exact_matches"].append(match)
                 if i in n_res_list:
                     metrics[f"cov@{i}"] = int(1 in metrics["exact_matches"])
                     metrics[f"maj@{i}"] = int(doc["answer"] == Counter(metrics["extracted_answers"]).most_common(1)[0][0])
