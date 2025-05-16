@@ -18,11 +18,32 @@ metric_list:
   - metric: exact_match
     aggregation: mean
     higher_is_better: true
-  - metric: exact_match_aime24
-    aggregation: mean_last30
-    higher_is_better: true
   - metric: extracted_answers
     aggregation: bypass
+    higher_is_better: true
+  - metric: tok_think@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long
+    aggregation: meanlist
     higher_is_better: true
 metadata:
   version: 1.0
