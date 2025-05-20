@@ -1,4 +1,5 @@
 import copy
+import json
 import logging
 from importlib.metadata import version
 from importlib.util import find_spec
@@ -7,7 +8,8 @@ from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
 from more_itertools import distribute
 from packaging.version import parse as parse_version
 from tqdm import tqdm
-from trl.trainer.grpo_config.py import GRPOConfig
+from trl.trainer.grpo_config import GRPOConfig
+from trl.tools.batch_tool_utils import generate_with_tool_batch
 
 from lm_eval.api.instance import Instance
 from lm_eval.api.model import TemplateLM
@@ -231,7 +233,7 @@ class VLLMTool(TemplateLM):
 
     def _model_generate(
         self,
-        requests: List[List[int]] = None,
+        requests: List[str] = None,
         generate: bool = False,
         max_tokens: int = None,
         stop: Optional[List[str]] = None,
@@ -247,31 +249,24 @@ class VLLMTool(TemplateLM):
                 assert "max_tokens_thinking" in kwargs, "Rejection sampling requires max_tokens_thinking to be set."
 
             sampling_params = SamplingParams(max_tokens=max_tokens, stop=stop, **kwargs)
+
         else:
             sampling_params = SamplingParams(
                 temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False
             )
             
-            tool_args = GRPOConfig(
-                vllm_server_host="localhost",  # override with actual value or from kwargs
-                vllm_server_port=8000,
-                temperature=kwargs.get("temperature", 0.0),
-                top_p=kwargs.get("top_p", 1.0),
-                top_k=kwargs.get("top_k", -1),
-                min_p=kwargs.get("min_p", 0.0),
-                max_completion_length=max_tokens or self.max_gen_toks,
-                repetition_penalty=kwargs.get("repetition_penalty", 1.0),
-                eos_token=self.tokenizer.eos_token or "<|endoftext|>",
-                result_token="<tool_call>",  # adjust if different
-                result_tokens=["<tool_call>"],
-                saving_tokens=["<saving>", "</saving>"],
-                vllm_guided_decoding_regex=None,
-            )
-            
-            prompts_to_return, completions_to_return, _ = generate_with_tool_batch(
-                prompts=prompts,
-                args=tool_args,
-            )
+        tool_args = GRPOConfig(
+            vllm_mode="colocate",
+            temperature=kwargs.get("temperature", 0.6),
+            top_p=kwargs.get("top_p", 0.95),
+            top_k=kwargs.get("top_k", 20),
+            min_p=kwargs.get("min_p", 0.0),
+            max_completion_length=max_tokens or self.max_gen_toks,
+            repetition_penalty=kwargs.get("repetition_penalty", 1.0),
+            eos_token=self.tokenizer.eos_token,
+            result_tokens=["<tool_call>"],
+            saving_tokens=["<saving>", "</saving>"],
+        )
             
             
         if self.data_parallel_size > 1:
@@ -282,15 +277,19 @@ class VLLMTool(TemplateLM):
             def run_inference_one_model(
                 model_args: dict,
                 sampling_params: SamplingParams,
-                requests: List[List[int]],
+                requests: List[str],
                 lora_request: LoRARequest,
             ):
                 llm = LLM(**model_args)
-                return llm.generate(
-                    prompt_token_ids=requests,
-                    sampling_params=sampling_params,
-                    lora_request=lora_request,
+                _, completions_to_return, tool_stats = generate_with_tool_batch(
+                    prompts=requests,
+                    args=tool_args,
+                    llm=llm,
                 )
+                with open(f"./{self.model_args['model'].replace('/', '_')}_tool_usage.jsonl", "a") as f:
+                    f.write(json.dumps(tool_stats)+"\n")
+                return completions_to_return[-len(requests):]
+                
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
             # interleaved important to balance context lengths across workers
@@ -306,24 +305,23 @@ class VLLMTool(TemplateLM):
             # flatten results
             return undistribute(results)
 
-        if self.lora_request is not None:
-            outputs = self.model.generate(
-                prompt_token_ids=requests,
-                sampling_params=sampling_params,
-                use_tqdm=True if self.batch_size == "auto" else False,
-                lora_request=self.lora_request,
-            )
-        else:
-            outputs = self.model.generate(
-                prompt_token_ids=requests,
-                sampling_params=sampling_params,
-                use_tqdm=True if self.batch_size == "auto" else False,
-            )
-            if outputs_thinking is not None:
-                for i, o in enumerate(outputs):
-                    assert len(o.outputs) == 1
-                    outputs[i].outputs[0].text = outputs_thinking[i].outputs[0].text + outputs[i].outputs[0].text
-        return outputs
+        assert self.lora_request is None, "Lora request is not supported for eval with tools."
+
+        # outputs = self.model.generate(
+        #     prompt_token_ids=requests,
+        #     sampling_params=sampling_params,
+        #     use_tqdm=True if self.batch_size == "auto" else False,
+        # )
+        
+        _, completions_to_return, tool_stats = generate_with_tool_batch(
+            prompts=requests,
+            args=tool_args,
+            llm=self.model,
+        )
+        with open(f"./{self.model_args['model'].replace('/', '_')}_tool_usage.jsonl", "a") as f:
+            f.write(json.dumps(tool_stats)+"\n")
+        return completions_to_return[-len(requests):]
+
 
     def loglikelihood_rolling(
         self, requests: List[Instance], disable_tqdm: bool = False
@@ -464,7 +462,7 @@ class VLLMTool(TemplateLM):
 
             # perform batched generation
             cont = self._model_generate(
-                requests=context_encoding,
+                requests=list(context),
                 generate=True,
                 max_tokens=max_gen_toks,
                 stop=until,
@@ -472,8 +470,7 @@ class VLLMTool(TemplateLM):
             )
 
             # cache generations
-            for i, (output, context) in tqdm(enumerate(zip(cont, context)), desc="final processing"):
-                generated_text = output.outputs[0].text
+            for i, (generated_text, context) in tqdm(enumerate(zip(cont, context)), desc="final processing"):
                 res.append(generated_text)
 
                 self.cache_hook.add_partial(
