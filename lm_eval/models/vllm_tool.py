@@ -261,10 +261,10 @@ class VLLMTool(TemplateLM):
             top_p=kwargs.get("top_p", 0.95),
             top_k=kwargs.get("top_k", 20),
             min_p=kwargs.get("min_p", 0.0),
-            max_completion_length=max_tokens or self.max_gen_toks,
+            max_completion_length=max_tokens,
             repetition_penalty=kwargs.get("repetition_penalty", 1.0),
             eos_token=self.tokenizer.eos_token,
-            result_tokens=["<tool_call>"],
+            result_tokens=["<tool_response>", "</tool_response>"],
             saving_tokens=["<saving>", "</saving>"],
         )
             
