@@ -257,7 +257,8 @@ class VLLMTool(TemplateLM):
             
         tool_args = GRPOConfig(
             vllm_mode="colocate",
-            temperature=kwargs.get("temperature", 0.6),
+            # temperature=kwargs.get("temperature", 0.6),
+            temperature=kwargs.get("temperature", 0),
             top_p=kwargs.get("top_p", 0.95),
             top_k=kwargs.get("top_k", 20),
             min_p=kwargs.get("min_p", 0.0),
