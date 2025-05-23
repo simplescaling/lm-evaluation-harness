@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": ["/workspace/s1-tool", "/workspace/trl", "/workspace/lm-evaluation-harness", "/workspace/simpleverify", "/workspace/open-r1"],
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.useLibraryCodeForTypes": true
+  }
