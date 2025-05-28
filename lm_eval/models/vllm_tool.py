@@ -286,6 +286,7 @@ class VLLMTool(TemplateLM):
                     prompts=requests,
                     args=tool_args,
                     llm=llm,
+                    tokenizer=self.tokenizer,
                 )
                 with open(f"./{self.model_args['model'].replace('/', '_')}_tool_usage.jsonl", "a") as f:
                     f.write(json.dumps(tool_stats)+"\n")
@@ -318,6 +319,7 @@ class VLLMTool(TemplateLM):
             prompts=requests,
             args=tool_args,
             llm=self.model,
+            tokenizer=self.tokenizer,
         )
         with open(f"./{self.model_args['model'].replace('/', '_')}_tool_usage.jsonl", "a") as f:
             f.write(json.dumps(tool_stats)+"\n")
