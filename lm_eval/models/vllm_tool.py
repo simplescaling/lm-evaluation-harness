@@ -9,7 +9,7 @@ from more_itertools import distribute
 from packaging.version import parse as parse_version
 from tqdm import tqdm
 from trl.trainer.grpo_config import GRPOConfig
-from trl.tools.batch_tool_utils import generate_with_tool_batch
+from trl.tools.parallel_tool_utils import generate_with_tool_batch
 
 from lm_eval.api.instance import Instance
 from lm_eval.api.model import TemplateLM
