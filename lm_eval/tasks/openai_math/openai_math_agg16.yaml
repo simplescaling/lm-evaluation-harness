@@ -1,6 +1,6 @@
 tag:
   - math_word_problems
-task: openai_math_agg64
+task: openai_math_agg16
 dataset_path: simplescaling/openaimath
 process_docs: !function utils.process_docs
 output_type: generate_until
@@ -13,20 +13,14 @@ generation_kwargs:
   do_sample: false
   temperature: 1
   max_gen_toks: 2048 # 2x of https://github.com/openai/simple-evals/blob/c0dba4c7bfbc17f786aec7bd7c3585a36ad81f23/sampler/chat_completion_sampler.py#L27  
-repeats: 64
+repeats: 16
 filter_list:
   - name: "all" # Will do coverage, majority, and take_first_k
     filter:
       - function: "take_first_k"
-        k: 64
+        k: 16
 metric_list:
   - metric: exact_match
-    aggregation: mean
-    higher_is_better: true
-  - metric: avg@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: avg@32
     aggregation: mean
     higher_is_better: true
   - metric: avg@16
@@ -41,12 +35,6 @@ metric_list:
   - metric: avg@2
     aggregation: mean
     higher_is_better: true
-  - metric: cov@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: cov@32
-    aggregation: mean
-    higher_is_better: true
   - metric: cov@16
     aggregation: mean
     higher_is_better: true
@@ -59,12 +47,6 @@ metric_list:
   - metric: cov@2
     aggregation: mean
     higher_is_better: true
-  - metric: maj@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: maj@32
-    aggregation: mean
-    higher_is_better: true
   - metric: maj@16
     aggregation: mean
     higher_is_better: true
@@ -75,12 +57,6 @@ metric_list:
     aggregation: mean
     higher_is_better: true
   - metric: maj@2
-    aggregation: mean
-    higher_is_better: true
-  - metric: tok_think@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: tok_think@32
     aggregation: mean
     higher_is_better: true
   - metric: tok_think@16
@@ -98,12 +74,6 @@ metric_list:
   - metric: tok_think@1
     aggregation: mean
     higher_is_better: true
-  - metric: tok_ans@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: tok_ans@32
-    aggregation: mean
-    higher_is_better: true
   - metric: tok_ans@16
     aggregation: mean
     higher_is_better: true
@@ -117,12 +87,6 @@ metric_list:
     aggregation: mean
     higher_is_better: true
   - metric: tok_ans@1
-    aggregation: mean
-    higher_is_better: true
-  - metric: tok@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: tok@32
     aggregation: mean
     higher_is_better: true
   - metric: tok@16
@@ -140,12 +104,6 @@ metric_list:
   - metric: tok@1
     aggregation: mean
     higher_is_better: true
-  - metric: too_long@64
-    aggregation: mean
-    higher_is_better: true
-  - metric: too_long@32
-    aggregation: mean
-    higher_is_better: true
   - metric: too_long@16
     aggregation: mean
     higher_is_better: true
@@ -160,21 +118,6 @@ metric_list:
     higher_is_better: true
   - metric: too_long@1
     aggregation: mean
-    higher_is_better: true
-  - metric: extracted_answers
-    aggregation: bypass
-    higher_is_better: true
-  - metric: tok
-    aggregation: meanlist
-    higher_is_better: true
-  - metric: tok_think
-    aggregation: meanlist
-    higher_is_better: true
-  - metric: tok_ans
-    aggregation: meanlist
-    higher_is_better: true
-  - metric: too_long
-    aggregation: meanlist
     higher_is_better: true
   - metric: extracted_answers
     aggregation: bypass

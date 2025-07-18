@@ -465,7 +465,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
         numpy_random_seed=args.seed[1],
         torch_random_seed=args.seed[2],
         fewshot_random_seed=args.seed[3],
-        bootstrap_iters=0,
+        # bootstrap_iters=0,
         random_subsample=args.random_subsample,
         confirm_run_unsafe_code=args.confirm_run_unsafe_code,
         metadata=metadata,
@@ -503,6 +503,28 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
                 evaluation_tracker.save_results_samples(
                     task_name=task_name, samples=samples[task_name]
                 )
+
+            from datetime import datetime
+            import shutil
+            tool_usage_path = "tool_usage.jsonl"
+            extra_completions_path = "extra_completions.jsonl"
+            if os.path.isdir(args.output_path):
+                output_dir = args.output_path
+            else:
+                output_dir = os.path.dirname(args.output_path)
+            # If there's exactly one subdirectory, use it
+            subdirs = [d for d in os.listdir(output_dir) if os.path.isdir(os.path.join(output_dir, d))]
+            if len(subdirs) == 1:
+                output_dir = os.path.join(output_dir, subdirs[0])
+            os.makedirs(output_dir, exist_ok=True)
+            uuid_datetime = datetime.now().isoformat().replace(":", "-")
+            if os.path.exists(tool_usage_path):
+                new_tool_path = os.path.join(output_dir, tool_usage_path.replace(".jsonl", f"_{uuid_datetime}.jsonl"))
+                shutil.move(tool_usage_path, new_tool_path)
+
+            if os.path.exists(extra_completions_path):
+                new_extra_path = os.path.join(output_dir, extra_completions_path.replace(".jsonl", f'_{uuid_datetime}.jsonl'))
+                shutil.move(extra_completions_path, new_extra_path)
 
         if (
             evaluation_tracker.push_results_to_hub

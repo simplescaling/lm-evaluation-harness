@@ -1,6 +1,7 @@
 import copy
 import json
 import logging
+import os
 from importlib.metadata import version
 from importlib.util import find_spec
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
@@ -8,8 +9,13 @@ from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
 from more_itertools import distribute
 from packaging.version import parse as parse_version
 from tqdm import tqdm
-from trl.trainer.grpo_config import GRPOConfig
-from trl.tools.parallel_tool_utils import generate_with_tool_batch
+try:
+    from trl.trainer.grpo_config import GRPOConfig
+    from trl.tools.parallel_tool_utils import generate_with_tool_batch
+except Exception as e:
+    print(
+        f"WARNING: Could not import from trl.tools.parallel_tool_utils; vllm-tool model will not work. Error: {e}"
+    )
 
 from lm_eval.api.instance import Instance
 from lm_eval.api.model import TemplateLM
@@ -266,9 +272,9 @@ class VLLMTool(TemplateLM):
             repetition_penalty=kwargs.get("repetition_penalty", 1.0),
             eos_token=self.tokenizer.eos_token,
             result_tokens=["<tool_response>", "</tool_response>"],
-            saving_tokens=["<saving>", "</saving>"],
+            # saving_tokens=["<saving>", "</saving>"],
+            saving_tokens=["<context>", "</context>"],
         )
-            
             
         if self.data_parallel_size > 1:
             # vLLM hangs if resources are set in ray.remote
@@ -282,7 +288,7 @@ class VLLMTool(TemplateLM):
                 lora_request: LoRARequest,
             ):
                 llm = LLM(**model_args)
-                _, completions_to_return, tool_stats = generate_with_tool_batch(
+                prompts_to_return, completions_to_return, tool_stats = generate_with_tool_batch(
                     prompts=requests,
                     args=tool_args,
                     llm=llm,
@@ -315,16 +321,27 @@ class VLLMTool(TemplateLM):
         #     use_tqdm=True if self.batch_size == "auto" else False,
         # )
         
-        _, completions_to_return, tool_stats = generate_with_tool_batch(
+        prompts_to_return, completions_to_return, tool_stats = generate_with_tool_batch(
             prompts=requests,
             args=tool_args,
             llm=self.model,
             tokenizer=self.tokenizer,
+            budget_force_saving=int(os.getenv("BUDGET_FORCE_SAVING", 0)),
+            max_saving=int(os.getenv("MAX_SAVING", 1)),
+            saving_prompt=os.getenv("SAVING_PROMPT", None),
+            use_max=os.getenv("USE_MAX", False),
+            move_context_to_prompt=True,
         )
-        with open(f"./{self.model_args['model'].replace('/', '_')}_tool_usage.jsonl", "a") as f:
-            f.write(json.dumps(tool_stats)+"\n")
+        # ./{self.model_args['model'].replace('/', '_')}_
+        with open(f"tool_usage.jsonl", "a") as f:
+            f.write(json.dumps(tool_stats) + "\n")
+        with open(f"extra_completions.jsonl", "a") as f:
+            for p, c in zip(prompts_to_return, completions_to_return):
+                f.write(json.dumps({
+                    "prompt": p,
+                    "completion": c
+                }, ensure_ascii=False) + "\n")
         return completions_to_return[-len(requests):]
-
 
     def loglikelihood_rolling(
         self, requests: List[Instance], disable_tqdm: bool = False

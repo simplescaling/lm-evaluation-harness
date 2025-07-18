@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Dict, List, Optional
 
-from simpleverify import verify_generic
+from simpleverify import verify_generic, verify_math
 from datasets import Dataset
 
 eval_logger = logging.getLogger(__name__)
@@ -63,6 +63,7 @@ def process_results(
         gt = str(doc["answer"])
 
     SEP = os.getenv("SEP", "</think>")
+    VERIFYFN = os.getenv("VERIFYFN", "verify_math")
 
     for i, a in enumerate(results, start=1):
         if tokenizer is not None:
@@ -77,7 +78,11 @@ def process_results(
                 metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(metrics["tok_ans"])
                 metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(metrics["too_long"])
 
-        match, x, y = verify_generic(a, gt, sep=SEP)[0]
+        if VERIFYFN == "verify_math":
+            match, x, y = verify_math(a, gt, sep=SEP)[0]
+        elif VERIFYFN == "verify_generic":
+            match, x, y = verify_generic(a, gt, sep=SEP, m='gpt-4.1-mini-2025-04-14')[0]
+
         metrics["extracted_answers"].append(gt if match else x)
         if not(match): # Optional logging
             print("Marked incorrect\na " + metrics["extracted_answers"][-1] + "\ndoc['answer'] " + gt)
