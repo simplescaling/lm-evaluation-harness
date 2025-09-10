@@ -111,9 +111,7 @@ class TaskOutput:
                 # TODO: Handle this better and allow other aggregate functions other than mean.
                 agg_fn = mean
             metric_key = f"{metric},{filter_key}"
-            print(f"metric_key: {metric_key}")
-            print(f"items: {items}")
-            print(f"agg_fn: {agg_fn}")
+        
             self.agg_metrics[metric_key] = agg_fn(items)
             self.sample_len = len(items)  # TODO: same sample size for each metric?
             if isinstance(bootstrap_iters, int):
