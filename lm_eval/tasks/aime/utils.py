@@ -73,7 +73,6 @@ def process_results(
             parts = a.split(SEP, 1)
             metrics["tok_think"].append(len(tokenizer.tokenize(parts[0])))
             metrics["tok_ans"].append(0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1])))
-            toks = tokenizer.tokenize(a)
             metrics["tok"].append(len(toks := tokenizer.tokenize(a)))
             metrics["too_long"].append(metrics["tok"][-1] >= max_len)
             metrics["repetitive"].append(len(set(w := toks[-repeat_window:]))/len(w) < unique_thresh)
@@ -87,7 +86,6 @@ def process_results(
             match, x, y = verify_math(a, gt, sep=SEP)[0]
         elif VERIFYFN == "verify_generic":
             match, x, y = verify_generic(a, gt, sep=SEP, m='gpt-4.1-mini-2025-04-14')[0]
-
 
         metrics["extracted_answers"].append(gt if match else x)
         if not(match): # Optional logging
