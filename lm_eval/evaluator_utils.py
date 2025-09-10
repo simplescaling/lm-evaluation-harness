@@ -111,8 +111,6 @@ class TaskOutput:
                 # TODO: Handle this better and allow other aggregate functions other than mean.
                 agg_fn = mean
             metric_key = f"{metric},{filter_key}"
-            # from ipdb import set_trace as bp
-            # bp()
             print(f"metric_key: {metric_key}")
             print(f"items: {items}")
             print(f"agg_fn: {agg_fn}")
