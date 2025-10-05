@@ -2,6 +2,7 @@ from collections import Counter
 import logging
 import os
 from typing import Dict, List, Optional
+import numpy as np
 
 from simpleverify import verify_generic, verify_math
 from datasets import Dataset
@@ -32,6 +33,7 @@ def process_results(
     max_len=32768,
     repeat_window=100,
     unique_thresh=0.2,
+    addtokens=False,
 ) -> Dict[str, int]:
     metrics = {"exact_match": None, "extracted_answers": []}
     # Multiple results -> we are measuring cov/maj etc
@@ -100,5 +102,35 @@ def process_results(
                 metrics[f"cov@{i}"] = int(1 in metrics["exact_matches"])
                 metrics[f"maj@{i}"] = int(gt == Counter(metrics["extracted_answers"]).most_common(1)[0][0])
                 metrics[f"avg@{i}"] = sum(metrics["exact_matches"]) / i
+    
+    if addtokens:
+        addtoks = [2**x for x in range(6, int(np.log2(max_len)) + 1)]
+        metrics = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): v for k, v in metrics.items() for t in addtoks}
+        for t in addtoks:
+            for i, t_used in enumerate(metrics[f"tok@{t}"]):
+                if t_used > t:
+                    if i == 0:
+                        metrics[f"exact_match@{t}"] = 0
+                    metrics[f"exact_matches@{t}"][i] = 0
+                    metrics[f"tok@{t}"][i] = t
+                    if metrics[f"tok_think@{t}"][i] > t:
+                        metrics[f"tok_think@{t}"][i] = t
+                        metrics[f"tok_ans@{t}"][i] = 0
+                    else:
+                        metrics[f"tok_ans@{t}"][i] = t - metrics[f"tok_think@{t}"][i]
+                    metrics[f"too_long@{t}"][i] = 1
+                    # make it unique so maj is unaffected
+                    metrics[f"extracted_answers@{t}"][i] = "Too long at " + str(t)
+            
+            for i in n_res_list:
+                metrics[f"tok@{t}@{i}"] = sum(metrics[f"tok@{t}"]) / len(metrics[f"tok@{t}"])
+                metrics[f"tok_think@{t}@{i}"] = sum(metrics[f"tok_think@{t}"]) / len(metrics[f"tok_think@{t}"])
+                metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"]) / len(metrics[f"tok_ans@{t}"])
+                metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"]) / len(metrics[f"too_long@{t}"])
+                metrics[f"repetitive@{t}@{i}"] = sum(metrics[f"repetitive@{t}"]) / len(metrics[f"repetitive@{t}"])
+
+                metrics[f"cov@{t}@{i}"] = int(1 in metrics[f"exact_matches@{t}"])
+                metrics[f"maj@{t}@{i}"] = int(gt == Counter(metrics[f"extracted_answers@{t}"]).most_common(1)[0][0])
+                metrics[f"avg@{t}@{i}"] = sum(metrics[f"exact_matches@{t}"]) / i
 
     return metrics

@@ -598,6 +598,14 @@ def evaluate(
                         tokenizer=lm.tokenizer,
                         max_len=task_output.task_config["generation_kwargs"]["max_gen_toks"],
                     )
+                elif "tok@64@1" in task_output.task._metric_fn_list:
+                    metrics = task.process_results(
+                        doc,
+                        [req.filtered_resps[filter_key] for req in requests],
+                        tokenizer=lm.tokenizer,
+                        max_len=task_output.task_config["generation_kwargs"]["max_gen_toks"],
+                        addtokens=True,
+                    )
                 else:
                     metrics = task.process_results(
                         doc, [req.filtered_resps[filter_key] for req in requests]

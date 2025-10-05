@@ -25,7 +25,7 @@ from lm_eval.utils import (
 
 try:
     import ray
-    from vllm import LLM, SamplingParams
+    from vllm import LLM, SamplingParams, TokensPrompt
     from vllm.lora.request import LoRARequest
     from vllm.transformers_utils.tokenizer import get_tokenizer
 except ModuleNotFoundError:
@@ -441,7 +441,7 @@ class VLLM(TemplateLM):
             ):
                 llm = LLM(**model_args)
                 return llm.generate(
-                    prompt_token_ids=requests,
+                    [TokensPrompt(prompt_token_ids=request) for request in requests],
                     sampling_params=sampling_params,
                     lora_request=lora_request,
                 )
@@ -469,7 +469,7 @@ class VLLM(TemplateLM):
             )
         else:
             outputs = self.model.generate(
-                prompt_token_ids=requests,
+                [TokensPrompt(prompt_token_ids=request) for request in requests],
                 sampling_params=sampling_params,
                 use_tqdm=True if self.batch_size == "auto" else False,
             )
