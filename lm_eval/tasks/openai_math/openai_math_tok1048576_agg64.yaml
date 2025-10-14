@@ -1,0 +1,2754 @@
+tag:
+  - math_word_problems
+task: openai_math_tok1048576_agg64
+dataset_path: simplescaling/openaimath
+process_docs: !function utils.process_docs
+output_type: generate_until
+test_split: test
+doc_to_text: !function utils.doc_to_text
+doc_to_target: answer
+process_results: !function utils.process_results
+generation_kwargs:
+  until: []
+  do_sample: false
+  temperature: 1
+  max_gen_toks: 2048 # 2x of https://github.com/openai/simple-evals/blob/c0dba4c7bfbc17f786aec7bd7c3585a36ad81f23/sampler/chat_completion_sampler.py#L27  
+repeats: 64
+filter_list:
+  - name: "all" # Will do coverage, majority, and take_first_k
+    filter:
+      - function: "take_first_k"
+        k: 64
+metric_list:
+  - metric: exact_match@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@64@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@64@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@64@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@64@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@64@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@64@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@64@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@64@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@64@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@64@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@64@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@64
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@64
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@64
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@64
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@64
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@64
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@64
+    aggregation: meanlist
+  - metric: exact_match@128
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@128@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@128@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@128@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@128@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@128@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@128@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@128@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@128@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@128@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@128@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@128@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@128
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@128
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@128
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@128
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@128
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@128
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@128
+    aggregation: meanlist
+  - metric: exact_match@256
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@256@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@256@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@256@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@256@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@256@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@256@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@256@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@256@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@256@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@256@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@256@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@256
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@256
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@256
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@256
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@256
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@256
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@256
+    aggregation: meanlist
+  - metric: exact_match@512
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@512@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@512@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@512@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@512@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@512@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@512@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@512@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@512@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@512@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@512@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@512@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@512
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@512
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@512
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@512
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@512
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@512
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@512
+    aggregation: meanlist
+  - metric: exact_match@1024
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1024@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1024@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1024@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1024@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1024@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1024@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1024@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1024@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1024@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1024@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1024@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@1024
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@1024
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@1024
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@1024
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@1024
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@1024
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@1024
+    aggregation: meanlist
+  - metric: exact_match@2048
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@2048@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@2048@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@2048@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@2048@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2048@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2048@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2048@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2048@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2048@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2048@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2048@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@2048
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@2048
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@2048
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@2048
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@2048
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@2048
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@2048
+    aggregation: meanlist
+  - metric: exact_match@4096
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@4096@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@4096@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@4096@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@4096@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4096@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4096@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4096@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4096@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4096@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4096@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4096@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@4096
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@4096
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@4096
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@4096
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@4096
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@4096
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@4096
+    aggregation: meanlist
+  - metric: exact_match@8192
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@8192@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@8192@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@8192@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@8192@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8192@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8192@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8192@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8192@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8192@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8192@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8192@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@8192
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@8192
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@8192
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@8192
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@8192
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@8192
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@8192
+    aggregation: meanlist
+  - metric: exact_match@16384
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@16384@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@16384@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@16384@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@16384@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16384@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16384@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16384@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16384@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16384@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16384@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16384@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@16384
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@16384
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@16384
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@16384
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@16384
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@16384
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@16384
+    aggregation: meanlist
+  - metric: exact_match@32768
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@32768@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@32768@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@32768@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@32768@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32768@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32768@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32768@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32768@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32768@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32768@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32768@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@32768
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@32768
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@32768
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@32768
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@32768
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@32768
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@32768
+    aggregation: meanlist
+  - metric: exact_match@65536
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@65536@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@65536@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@65536@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@65536@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@65536@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@65536@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@65536@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@65536@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@65536@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@65536@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@65536@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@65536
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@65536
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@65536
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@65536
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@65536
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@65536
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@65536
+    aggregation: meanlist
+  - metric: exact_match@131072
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@131072@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@131072@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@131072@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@131072@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@131072@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@131072@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@131072@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@131072@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@131072@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@131072@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@131072@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@131072
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@131072
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@131072
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@131072
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@131072
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@131072
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@131072
+    aggregation: meanlist
+  - metric: exact_match@262144
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@262144@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@262144@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@262144@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@262144@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@262144@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@262144@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@262144@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@262144@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@262144@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@262144@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@262144@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@262144
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@262144
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@262144
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@262144
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@262144
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@262144
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@262144
+    aggregation: meanlist
+  - metric: exact_match@524288
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@524288@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@524288@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@524288@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@524288@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@524288@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@524288@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@524288@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@524288@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@524288@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@524288@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@524288@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@524288
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@524288
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@524288
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@524288
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@524288
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@524288
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@524288
+    aggregation: meanlist
+  - metric: exact_match@1048576
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: avg@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: cov@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: maj@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_think@1048576@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok_ans@1048576@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: tok@1048576@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1048576@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1048576@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1048576@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1048576@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1048576@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1048576@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1048576@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@1048576@1
+    aggregation: mean
+    higher_is_better: true
+  - metric: extracted_answers@1048576
+    aggregation: bypass
+    higher_is_better: true
+  - metric: tok@1048576
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_think@1048576
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: tok_ans@1048576
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: too_long@1048576
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive@1048576
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: exact_matches@1048576
+    aggregation: meanlist
+metadata:
+  version: 1.0

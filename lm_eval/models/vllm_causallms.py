@@ -1,5 +1,6 @@
 import copy
 import logging
+import os
 from importlib.metadata import version
 from importlib.util import find_spec
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional, Tuple, Union
@@ -97,6 +98,15 @@ class VLLM(TemplateLM):
             "quantization": quantization,
             "seed": int(seed),
         }
+        if os.environ.get("VLLM_ATTENTION_BACKEND") == "TRITON_ATTN":
+            print("Deactivating full cuda graph capture")
+            from vllm.config import CompilationConfig
+            from vllm.config import CUDAGraphMode
+            self.model_args["compilation_config"] = CompilationConfig(
+                level=3,
+                cudagraph_mode=CUDAGraphMode.PIECEWISE,
+            )
+
         self.model_args.update(kwargs)
         self.batch_size = (
             "auto"

@@ -1,7 +1,9 @@
 from collections import Counter
 import os
 import time
+import numpy as np
 from typing import Any, Dict, List, Optional
+import copy
 import random
 import re
 
@@ -72,6 +74,9 @@ def process_results(
     results: List[str],
     tokenizer = None,
     max_len = 32768,
+    repeat_window=100,
+    unique_thresh=0.2,
+    addtokens=False,
 ) -> Dict[str, int]:
     metrics = {"exact_match": None, "extracted_answers": []}
     # Multiple results -> we are measuring cov/maj etc
@@ -93,11 +98,12 @@ def process_results(
 
         metrics = {
             **metrics,
-            **{"tok": [], "tok_think": [], "tok_ans": [], "too_long": []},
+            **{"tok": [], "tok_think": [], "tok_ans": [], "too_long": [], "repetitive": []},
             **{f"tok@{n}": -1 for n in n_stats_list},
             **{f"tok_think@{n}": -1 for n in n_stats_list},
             **{f"tok_ans@{n}": -1 for n in n_stats_list},
             **{f"too_long@{n}": -1 for n in n_stats_list},
+            **{f"repetitive@{n}": -1 for n in n_stats_list},
         }
 
     sampler = ChatCompletionSampler(model="gpt-4o-mini")
@@ -108,13 +114,15 @@ def process_results(
             parts = a.split(SEP, 1)
             metrics["tok_think"].append(len(tokenizer.tokenize(parts[0])))
             metrics["tok_ans"].append(0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1])))
-            metrics["tok"].append(len(tokenizer.tokenize(a)))
+            metrics["tok"].append(len(toks := tokenizer.tokenize(a)))
             metrics["too_long"].append(metrics["tok"][-1] >= max_len)
+            metrics["repetitive"].append(len(set(w := toks[-repeat_window:]))/len(w) < unique_thresh)
             if i in n_stats_list:
                 metrics[f"tok@{i}"] = sum(metrics["tok"]) / len(metrics["tok"])
                 metrics[f"tok_think@{i}"] = sum(metrics["tok_think"]) / len(metrics["tok_think"])
                 metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(metrics["tok_ans"])
                 metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(metrics["too_long"])
+                metrics[f"repetitive@{i}"] = sum(metrics["repetitive"]) / len(metrics["repetitive"])
 
         a = clean(a, sep=SEP)
 
@@ -140,6 +148,35 @@ def process_results(
                 metrics[f"cov@{i}"] = int(1 in metrics["exact_matches"])
                 metrics[f"maj@{i}"] = int(doc["answer"] == Counter(metrics["extracted_answers"]).most_common(1)[0][0])
                 metrics[f"avg@{i}"] = sum(metrics["exact_matches"]) / i
+
+    if addtokens:
+        addtoks = [2**x for x in range(6, int(np.log2(max_len)) + 1)]
+        metrics = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): copy.copy(v) for k, v in metrics.items() for t in addtoks}
+        for t in addtoks:
+            for i, t_used in enumerate(metrics[f"tok@{t}"]):
+                if t_used > t:
+                    if i == 0:
+                        metrics[f"exact_match@{t}"] = 0
+                    metrics[f"exact_matches@{t}"][i] = 0
+                    metrics[f"tok@{t}"][i] = t
+                    if metrics[f"tok_think@{t}"][i] > t:
+                        metrics[f"tok_think@{t}"][i] = t
+                        metrics[f"tok_ans@{t}"][i] = 0
+                    else:
+                        metrics[f"tok_ans@{t}"][i] = t - metrics[f"tok_think@{t}"][i]
+                    metrics[f"too_long@{t}"][i] = 1
+                    # make it unique so maj is unaffected
+                    metrics[f"extracted_answers@{t}"][i] = "Too long at " + str(t)
+
+            for i in n_stats_list:
+                metrics[f"tok@{t}@{i}"] = sum(metrics[f"tok@{t}"][:i]) / len(metrics[f"tok@{t}"][:i])
+                metrics[f"tok_think@{t}@{i}"] = sum(metrics[f"tok_think@{t}"][:i]) / len(metrics[f"tok_think@{t}"][:i])
+                metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"][:i]) / len(metrics[f"tok_ans@{t}"][:i])
+                metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"][:i]) / len(metrics[f"too_long@{t}"][:i])
+                if i in n_res_list:
+                    metrics[f"cov@{t}@{i}"] = int(1 in metrics[f"exact_matches@{t}"][:i])
+                    metrics[f"maj@{t}@{i}"] = int(doc["answer"] == Counter(metrics[f"extracted_answers@{t}"][:i]).most_common(1)[0][0])
+                    metrics[f"avg@{t}@{i}"] = sum(metrics[f"exact_matches@{t}"][:i]) / i
 
     return metrics
 

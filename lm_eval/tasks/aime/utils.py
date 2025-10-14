@@ -3,6 +3,7 @@ import logging
 import os
 from typing import Dict, List, Optional
 import numpy as np
+import copy
 
 from simpleverify import verify_generic, verify_math
 from datasets import Dataset
@@ -84,14 +85,15 @@ def process_results(
                 metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(metrics["tok_ans"])
                 metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(metrics["too_long"])
                 metrics[f"repetitive@{i}"] = sum(metrics["repetitive"]) / len(metrics["repetitive"])
+
         if VERIFYFN == "verify_math":
             match, x, y = verify_math(a, gt, sep=SEP)[0]
         elif VERIFYFN == "verify_generic":
             match, x, y = verify_generic(a, gt, sep=SEP, m='gpt-4.1-mini-2025-04-14')[0]
 
         metrics["extracted_answers"].append(gt if match else x)
-        if not(match): # Optional logging
-            print("Marked incorrect\na " + metrics["extracted_answers"][-1] + "\ndoc['answer'] " + gt)
+        # if not(match): # Optional logging
+        #     print("Marked incorrect\na " + metrics["extracted_answers"][-1] + "\ndoc['answer'] " + gt)
         if i == 1:
             metrics["exact_match"] = match
             if "exact_matches" in metrics:
@@ -105,7 +107,7 @@ def process_results(
     
     if addtokens:
         addtoks = [2**x for x in range(6, int(np.log2(max_len)) + 1)]
-        metrics = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): v for k, v in metrics.items() for t in addtoks}
+        metrics = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): copy.copy(v) for k, v in metrics.items() for t in addtoks}
         for t in addtoks:
             for i, t_used in enumerate(metrics[f"tok@{t}"]):
                 if t_used > t:
@@ -121,16 +123,15 @@ def process_results(
                     metrics[f"too_long@{t}"][i] = 1
                     # make it unique so maj is unaffected
                     metrics[f"extracted_answers@{t}"][i] = "Too long at " + str(t)
-            
-            for i in n_res_list:
-                metrics[f"tok@{t}@{i}"] = sum(metrics[f"tok@{t}"]) / len(metrics[f"tok@{t}"])
-                metrics[f"tok_think@{t}@{i}"] = sum(metrics[f"tok_think@{t}"]) / len(metrics[f"tok_think@{t}"])
-                metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"]) / len(metrics[f"tok_ans@{t}"])
-                metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"]) / len(metrics[f"too_long@{t}"])
-                metrics[f"repetitive@{t}@{i}"] = sum(metrics[f"repetitive@{t}"]) / len(metrics[f"repetitive@{t}"])
 
-                metrics[f"cov@{t}@{i}"] = int(1 in metrics[f"exact_matches@{t}"])
-                metrics[f"maj@{t}@{i}"] = int(gt == Counter(metrics[f"extracted_answers@{t}"]).most_common(1)[0][0])
-                metrics[f"avg@{t}@{i}"] = sum(metrics[f"exact_matches@{t}"]) / i
+            for i in n_stats_list:
+                metrics[f"tok@{t}@{i}"] = sum(metrics[f"tok@{t}"][:i]) / len(metrics[f"tok@{t}"][:i])
+                metrics[f"tok_think@{t}@{i}"] = sum(metrics[f"tok_think@{t}"][:i]) / len(metrics[f"tok_think@{t}"][:i])
+                metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"][:i]) / len(metrics[f"tok_ans@{t}"][:i])
+                metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"][:i]) / len(metrics[f"too_long@{t}"][:i])
+                if i in n_res_list:
+                    metrics[f"cov@{t}@{i}"] = int(1 in metrics[f"exact_matches@{t}"][:i])
+                    metrics[f"maj@{t}@{i}"] = int(gt == Counter(metrics[f"extracted_answers@{t}"][:i]).most_common(1)[0][0])
+                    metrics[f"avg@{t}@{i}"] = sum(metrics[f"exact_matches@{t}"][:i]) / i
 
     return metrics

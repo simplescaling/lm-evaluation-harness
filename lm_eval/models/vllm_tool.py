@@ -261,6 +261,8 @@ class VLLMTool(TemplateLM):
                 temperature=0, prompt_logprobs=1, max_tokens=1, detokenize=False
             )
             
+        print(f"Using {max_tokens * int(os.getenv('MAX_SAVING', 1))} total tokens with {max_tokens} per window")
+        max_tokens = os.getenv("MAX_TOK_PER_WINDOW", max_tokens)
         tool_args = GRPOConfig(
             vllm_mode="colocate",
             # temperature=kwargs.get("temperature", 0.6),
@@ -275,6 +277,23 @@ class VLLMTool(TemplateLM):
             # saving_tokens=["<saving>", "</saving>"],
             saving_tokens=["<context>", "</context>"],
         )
+
+        # tool_args = GRPOConfig(
+        #     vllm_mode="colocate",
+        #     temperature=kwargs.get("temperature", 0),
+        #     top_p=kwargs.get("top_p", 0.95),
+        #     top_k=kwargs.get("top_k", 20),
+        #     min_p=kwargs.get("min_p", 0.0),
+        #     max_completion_length=max_tokens,
+        #     # repetition_penalty=kwargs.get("repetition_penalty", 1.0),
+        #     eos_token=self.tokenizer.eos_token,
+        #     # result_tokens=["<tool_response>", "</tool_response>"],
+        #     # saving_tokens=["<saving>", "</saving>"],
+        #     saving_tokens=["<context>", "</context>"],
+        #     max_num_savings=128
+        #     save_last_k=256,
+        # )
+
             
         if self.data_parallel_size > 1:
             # vLLM hangs if resources are set in ray.remote
@@ -321,7 +340,7 @@ class VLLMTool(TemplateLM):
         #     use_tqdm=True if self.batch_size == "auto" else False,
         # )
         
-        prompts_to_return, completions_to_return, tool_stats = generate_with_tool_batch(
+        prompts_to_return, completions_to_return, tool_stats, completions_to_return_concatted = generate_with_tool_batch(
             prompts=requests,
             args=tool_args,
             llm=self.model,
@@ -331,7 +350,9 @@ class VLLMTool(TemplateLM):
             saving_prompt=os.getenv("SAVING_PROMPT", None),
             use_max=os.getenv("USE_MAX", False),
             move_context_to_prompt=True,
+            save_last_k=int(os.getenv("SAVE_LAST_K", 0)),
         )
+        # import pdb; pdb.set_trace()
         # ./{self.model_args['model'].replace('/', '_')}_
         with open(f"tool_usage.jsonl", "a") as f:
             f.write(json.dumps(tool_stats) + "\n")
@@ -341,7 +362,8 @@ class VLLMTool(TemplateLM):
                     "prompt": p,
                     "completion": c
                 }, ensure_ascii=False) + "\n")
-        return completions_to_return[-len(requests):]
+        # return completions_to_return[-len(requests):]
+        return completions_to_return_concatted
 
     def loglikelihood_rolling(
         self, requests: List[Instance], disable_tqdm: bool = False
