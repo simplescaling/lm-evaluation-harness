@@ -106,7 +106,6 @@ class VLLM(TemplateLM):
                 level=3,
                 cudagraph_mode=CUDAGraphMode.PIECEWISE,
             )
-
         self.model_args.update(kwargs)
         self.batch_size = (
             "auto"
@@ -448,7 +447,9 @@ class VLLM(TemplateLM):
                 sampling_params: SamplingParams,
                 requests: List[List[int]],
                 lora_request: LoRARequest,
+                seed: int
             ):
+                model_args['seed'] = seed
                 llm = LLM(**model_args)
                 return llm.generate(
                     [TokensPrompt(prompt_token_ids=request) for request in requests],
@@ -460,8 +461,8 @@ class VLLM(TemplateLM):
             # interleaved important to balance context lengths across workers
             requests = [list(x) for x in distribute(self.data_parallel_size, requests)]
             inputs = (
-                (self.model_args, sampling_params, req, self.lora_request)
-                for req in requests
+                (self.model_args, sampling_params, req, self.lora_request, self.model_args['seed'] + i)
+                for i, req in enumerate(requests)
             )
             object_refs = [run_inference_one_model.remote(*x) for x in inputs]
             results = ray.get(object_refs)
