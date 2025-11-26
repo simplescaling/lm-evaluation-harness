@@ -3,9 +3,8 @@ tag:
   - healthbench
   - medical_reasoning
 task: healthbench
-dataset_path: json
-dataset_kwargs:
-  data_files: "/home/john-b-yang/workspace/hb_data/2025-05-07-06-14-12_oss_eval.jsonl"
+dataset_path: ryzax/healthbench
+dataset_name: default
 process_docs: !function utils.process_docs
 output_type: generate_until
 test_split: train
