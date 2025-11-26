@@ -275,13 +275,25 @@ async def grade_sample_async(
     return metrics, rubric_items_with_grades
 
 
-def process_results(doc: dict, results: List[str], **kwargs) -> Dict[str, float]:
+def process_results(doc: dict, results: List[str], repeat_window=100, unique_thresh=0.2, tokenizer=None, addtokens=False, **kwargs) -> Dict[str, float]:
     """Process results for a single document."""
     if not results or not results[0]:
         eval_logger.warning("Empty results received")
         return {
             "overall_score": 0.0,
             "exact_match": 0.0,
+        }
+
+    if tokenizer is not None:
+        n_stats_list = [1]
+        metrics = {
+            **metrics,
+            **{"tok": [], "tok_think": [], "tok_ans": [], "too_long": [], "repetitive": []},
+            **{f"tok@{n}": -1 for n in n_stats_list},
+            **{f"tok_think@{n}": -1 for n in n_stats_list},
+            **{f"tok_ans@{n}": -1 for n in n_stats_list},
+            **{f"too_long@{n}": -1 for n in n_stats_list},
+            **{f"repetitive@{n}": -1 for n in n_stats_list},
         }
 
     # Get the generated response
@@ -317,4 +329,45 @@ def process_results(doc: dict, results: List[str], **kwargs) -> Dict[str, float]
     # Don't include rubric_grades in returned metrics - it's not a scalar
     # and will cause aggregation errors. It's already logged if needed.
 
+    if True:
+        if tokenizer is not None:
+            SEP = os.getenv("SEP", "</think>")
+            parts = response_text.split(SEP, 1)
+            metrics["tok_think"].append(len(tokenizer.tokenize(parts[0])))
+            metrics["tok_ans"].append(0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1])))
+            metrics["tok"].append(len(toks := tokenizer.tokenize(a)))
+            metrics["too_long"].append(metrics["tok"][-1] >= max_len)
+            metrics["repetitive"].append(len(set(w := toks[-repeat_window:]))/len(w) < unique_thresh)
+            if i in n_stats_list:
+                metrics[f"tok@{i}"] = sum(metrics["tok"]) / len(metrics["tok"])
+                metrics[f"tok_think@{i}"] = sum(metrics["tok_think"]) / len(metrics["tok_think"])
+                metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(metrics["tok_ans"])
+                metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(metrics["too_long"])
+                metrics[f"repetitive@{i}"] = sum(metrics["repetitive"]) / len(metrics["repetitive"])
+
+
+    if addtokens:
+        addtoks = [2**x for x in range(6, int(np.log2(max_len)) + 1)]
+        metrics = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): copy.copy(v) for k, v in metrics.items() for t in addtoks}
+        for t in addtoks:
+            for i, t_used in enumerate(metrics[f"tok@{t}"]):
+                if t_used > t:
+                    if i == 0:
+                        metrics[f"exact_match@{t}"] = 0
+                    metrics[f"exact_matches@{t}"][i] = 0
+                    metrics[f"tok@{t}"][i] = t
+                    if metrics[f"tok_think@{t}"][i] > t:
+                        metrics[f"tok_think@{t}"][i] = t
+                        metrics[f"tok_ans@{t}"][i] = 0
+                    else:
+                        metrics[f"tok_ans@{t}"][i] = t - metrics[f"tok_think@{t}"][i]
+                    metrics[f"too_long@{t}"][i] = 1
+
+            for i in n_stats_list:
+                metrics[f"tok@{t}@{i}"] = sum(metrics[f"tok@{t}"][:i]) / len(metrics[f"tok@{t}"][:i])
+                metrics[f"tok_think@{t}@{i}"] = sum(metrics[f"tok_think@{t}"][:i]) / len(metrics[f"tok_think@{t}"][:i])
+                metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"][:i]) / len(metrics[f"tok_ans@{t}"][:i])
+                metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"][:i]) / len(metrics[f"too_long@{t}"][:i])
+
     return metrics
+
