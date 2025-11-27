@@ -1,10 +1,12 @@
+import os
 import asyncio
 import json
 import logging
 import re
+import copy
 from collections import defaultdict
 from typing import Dict, List
-
+import numpy as np
 from datasets import Dataset
 from openai import AsyncOpenAI
 from pydantic import BaseModel
@@ -275,25 +277,13 @@ async def grade_sample_async(
     return metrics, rubric_items_with_grades
 
 
-def process_results(doc: dict, results: List[str], repeat_window=100, unique_thresh=0.2, tokenizer=None, addtokens=False, **kwargs) -> Dict[str, float]:
+def process_results(doc: dict, results: List[str], repeat_window=100, unique_thresh=0.2, tokenizer=None, addtokens=False, max_len=32768, **kwargs) -> Dict[str, float]:
     """Process results for a single document."""
     if not results or not results[0]:
         eval_logger.warning("Empty results received")
         return {
             "overall_score": 0.0,
             "exact_match": 0.0,
-        }
-
-    if tokenizer is not None:
-        n_stats_list = [1]
-        metrics = {
-            **metrics,
-            **{"tok": [], "tok_think": [], "tok_ans": [], "too_long": [], "repetitive": []},
-            **{f"tok@{n}": -1 for n in n_stats_list},
-            **{f"tok_think@{n}": -1 for n in n_stats_list},
-            **{f"tok_ans@{n}": -1 for n in n_stats_list},
-            **{f"too_long@{n}": -1 for n in n_stats_list},
-            **{f"repetitive@{n}": -1 for n in n_stats_list},
         }
 
     # Get the generated response
@@ -329,15 +319,27 @@ def process_results(doc: dict, results: List[str], repeat_window=100, unique_thr
     # Don't include rubric_grades in returned metrics - it's not a scalar
     # and will cause aggregation errors. It's already logged if needed.
 
-    if True:
-        if tokenizer is not None:
+    #if True:
+    if tokenizer is not None:
+        n_stats_list = [1]
+        metrics = {
+            **metrics,
+            **{"tok": [], "tok_think": [], "tok_ans": [], "too_long": [], "repetitive": []},
+            **{f"tok@{n}": -1 for n in n_stats_list},
+            **{f"tok_think@{n}": -1 for n in n_stats_list},
+            **{f"tok_ans@{n}": -1 for n in n_stats_list},
+            **{f"too_long@{n}": -1 for n in n_stats_list},
+            **{f"repetitive@{n}": -1 for n in n_stats_list},
+        }
+        if True:
             SEP = os.getenv("SEP", "</think>")
             parts = response_text.split(SEP, 1)
             metrics["tok_think"].append(len(tokenizer.tokenize(parts[0])))
             metrics["tok_ans"].append(0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1])))
-            metrics["tok"].append(len(toks := tokenizer.tokenize(a)))
+            metrics["tok"].append(len(toks := tokenizer.tokenize(response_text)))
             metrics["too_long"].append(metrics["tok"][-1] >= max_len)
             metrics["repetitive"].append(len(set(w := toks[-repeat_window:]))/len(w) < unique_thresh)
+            i=1
             if i in n_stats_list:
                 metrics[f"tok@{i}"] = sum(metrics["tok"]) / len(metrics["tok"])
                 metrics[f"tok_think@{i}"] = sum(metrics["tok_think"]) / len(metrics["tok_think"])
@@ -348,13 +350,15 @@ def process_results(doc: dict, results: List[str], repeat_window=100, unique_thr
 
     if addtokens:
         addtoks = [2**x for x in range(6, int(np.log2(max_len)) + 1)]
-        metrics = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): copy.copy(v) for k, v in metrics.items() for t in addtoks}
+        metrics_tok = ["tok", "tok_think", "tok_ans", "too_long", "repetitive", "exact_match", "tok@1", "tok_think@1", "tok_ans@1", "too_long@1", "repetitive@1"]
+        metrics_tok_dict = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): copy.copy(metrics[k]) for k in metrics_tok for t in addtoks}
+        metrics = {**metrics_tok_dict, **{k: v for k, v in metrics.items() if k not in metrics_tok}}
         for t in addtoks:
             for i, t_used in enumerate(metrics[f"tok@{t}"]):
                 if t_used > t:
                     if i == 0:
                         metrics[f"exact_match@{t}"] = 0
-                    metrics[f"exact_matches@{t}"][i] = 0
+                    # metrics[f"exact_matches@{t}"][i] = 0
                     metrics[f"tok@{t}"][i] = t
                     if metrics[f"tok_think@{t}"][i] > t:
                         metrics[f"tok_think@{t}"][i] = t
@@ -368,6 +372,7 @@ def process_results(doc: dict, results: List[str], repeat_window=100, unique_thr
                 metrics[f"tok_think@{t}@{i}"] = sum(metrics[f"tok_think@{t}"][:i]) / len(metrics[f"tok_think@{t}"][:i])
                 metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"][:i]) / len(metrics[f"tok_ans@{t}"][:i])
                 metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"][:i]) / len(metrics[f"too_long@{t}"][:i])
+    print(metrics)
 
     return metrics
 

@@ -161,6 +161,27 @@ metric_list:
   - metric: too_long@1
     aggregation: mean
     higher_is_better: true
+  - metric: repetitive@64
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@32
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@16
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@8
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@4
+    aggregation: mean
+    higher_is_better: true
+  - metric: repetitive@2
+    aggregation: mean
+    higher_is_better: true
+  - metric: too_long@1
+    aggregation: mean
+    higher_is_better: true
   - metric: extracted_answers
     aggregation: bypass
     higher_is_better: true
@@ -175,12 +196,12 @@ metric_list:
     higher_is_better: true
   - metric: too_long
     aggregation: meanlist
-    higher_is_better: true
-  - metric: extracted_answers
-    aggregation: bypass
+    higher_is_better: true    
+  - metric: repetitive
+    aggregation: meanlist
     higher_is_better: true
   - metric: exact_matches
-    aggregation: bypass
+    aggregation: meanlist
     higher_is_better: true
 metadata:
   version: 1.0

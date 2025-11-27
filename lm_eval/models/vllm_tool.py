@@ -262,7 +262,7 @@ class VLLMTool(TemplateLM):
             )
             
         print(f"Using {max_tokens * int(os.getenv('MAX_SAVING', 1))} total tokens with {max_tokens} per window")
-        max_tokens = os.getenv("MAX_TOK_PER_WINDOW", max_tokens)
+        max_tokens = int(os.getenv("MAX_TOK_PER_WINDOW", max_tokens))
         tool_args = GRPOConfig(
             vllm_mode="colocate",
             # temperature=kwargs.get("temperature", 0.6),
@@ -351,6 +351,7 @@ class VLLMTool(TemplateLM):
             use_max=os.getenv("USE_MAX", False),
             move_context_to_prompt=True,
             save_last_k=int(os.getenv("SAVE_LAST_K", 0)),
+            subtract=os.getenv("SUBTRACT", False),
         )
         # import pdb; pdb.set_trace()
         # ./{self.model_args['model'].replace('/', '_')}_
