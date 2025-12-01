@@ -198,7 +198,10 @@ async def grade_rubric_item(
 def calculate_score(
     rubric_items: list[RubricItem], grading_response_list: list[dict]
 ) -> float | None:
-    """Calculate overall score from rubric items and grades."""
+    """Calculate overall score from rubric items and grades.
+
+    Score is clipped to [0, 1] range to match HealthBench reference implementation.
+    """
     total_possible_points = sum(
         rubric_item.points for rubric_item in rubric_items if rubric_item.points > 0
     )
@@ -213,6 +216,8 @@ def calculate_score(
         if grading_response["criteria_met"]
     )
     overall_score = achieved_points / total_possible_points
+    # Clip score to [0, 1] range to match HealthBench reference implementation
+    overall_score = np.clip(overall_score, 0, 1)
     return overall_score
 
 
