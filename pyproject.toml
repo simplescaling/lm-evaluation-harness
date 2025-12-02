@@ -39,6 +39,7 @@ dependencies = [
     "dill",
     "word2number",
     "more_itertools",
+    "portkey-ai",
 ]
 
 [tool.setuptools.packages.find]

@@ -1,26 +1,42 @@
-import os
 import asyncio
+import copy
 import json
 import logging
+import os
 import re
-import copy
 from collections import defaultdict
 from typing import Dict, List
+
 import numpy as np
 from datasets import Dataset
 from openai import AsyncOpenAI
+from portkey_ai import AsyncPortkey
 from pydantic import BaseModel
 
 
 # Initialize client lazily to avoid import-time API key requirement
 _client = None
+JUDGE_MODEL = "gpt-4.1-2025-04-14"
 
 
 def get_client():
     """Get or create AsyncOpenAI client."""
     global _client
     if _client is None:
-        _client = AsyncOpenAI(timeout=300.0, max_retries=1)
+        key = os.environ.get("PORTKEY_API_KEY", None)
+        if key is not None:
+            _client = AsyncPortkey(
+                **{
+                    "api_key": key,
+                    "timeout": 300.0,
+                    "max_retries": 1,
+                }
+            )
+            global JUDGE_MODEL
+            JUDGE_MODEL = "@openai/gpt-4.1-2025-04-14"
+        else:
+            # Use OpenAI by default
+            _client = AsyncOpenAI(timeout=300.0, max_retries=1)
     return _client
 
 
@@ -157,7 +173,7 @@ def process_docs(dataset: Dataset) -> Dataset:
 
 
 async def grade_rubric_item(
-    conversation: str, rubric_item: RubricItem, model: str = "gpt-4.1-2025-04-14"
+    conversation: str, rubric_item: RubricItem, model: str = JUDGE_MODEL
 ) -> dict:
     """Grade a single rubric item using LLM-as-judge."""
     grader_prompt = GRADER_TEMPLATE.replace("<<conversation>>", conversation).replace(
@@ -198,7 +214,10 @@ async def grade_rubric_item(
 def calculate_score(
     rubric_items: list[RubricItem], grading_response_list: list[dict]
 ) -> float | None:
-    """Calculate overall score from rubric items and grades."""
+    """Calculate overall score from rubric items and grades.
+
+    Score is clipped to [0, 1] range to match HealthBench reference implementation.
+    """
     total_possible_points = sum(
         rubric_item.points for rubric_item in rubric_items if rubric_item.points > 0
     )
@@ -213,6 +232,8 @@ def calculate_score(
         if grading_response["criteria_met"]
     )
     overall_score = achieved_points / total_possible_points
+    # Clip score to [0, 1] range to match HealthBench reference implementation
+    overall_score = np.clip(overall_score, 0, 1)
     return overall_score
 
 
@@ -221,7 +242,7 @@ async def grade_sample_async(
     response_text: str,
     rubric_items: list[RubricItem],
     example_tags: list[str],
-    model: str = "gpt-4.1-2025-04-14",
+    model: str = JUDGE_MODEL,
 ) -> tuple[dict, list[dict]]:
     """Grade a complete sample asynchronously."""
     # Construct conversation with response
@@ -277,7 +298,16 @@ async def grade_sample_async(
     return metrics, rubric_items_with_grades
 
 
-def process_results(doc: dict, results: List[str], repeat_window=100, unique_thresh=0.2, tokenizer=None, addtokens=False, max_len=32768, **kwargs) -> Dict[str, float]:
+def process_results(
+    doc: dict,
+    results: List[str],
+    repeat_window=100,
+    unique_thresh=0.2,
+    tokenizer=None,
+    addtokens=False,
+    max_len=32768,
+    **kwargs,
+) -> Dict[str, float]:
     """Process results for a single document."""
     if not results or not results[0]:
         eval_logger.warning("Empty results received")
@@ -306,7 +336,7 @@ def process_results(doc: dict, results: List[str], repeat_window=100, unique_thr
                 response_text=response_text,
                 rubric_items=rubric_items,
                 example_tags=example_tags,
-                model="gpt-4.1-2025-04-14",
+                model=JUDGE_MODEL,
             )
         )
     except Exception as e:
@@ -319,12 +349,18 @@ def process_results(doc: dict, results: List[str], repeat_window=100, unique_thr
     # Don't include rubric_grades in returned metrics - it's not a scalar
     # and will cause aggregation errors. It's already logged if needed.
 
-    #if True:
+    # if True:
     if tokenizer is not None:
         n_stats_list = [1]
         metrics = {
             **metrics,
-            **{"tok": [], "tok_think": [], "tok_ans": [], "too_long": [], "repetitive": []},
+            **{
+                "tok": [],
+                "tok_think": [],
+                "tok_ans": [],
+                "too_long": [],
+                "repetitive": [],
+            },
             **{f"tok@{n}": -1 for n in n_stats_list},
             **{f"tok_think@{n}": -1 for n in n_stats_list},
             **{f"tok_ans@{n}": -1 for n in n_stats_list},
@@ -335,24 +371,56 @@ def process_results(doc: dict, results: List[str], repeat_window=100, unique_thr
             SEP = os.getenv("SEP", "</think>")
             parts = response_text.split(SEP, 1)
             metrics["tok_think"].append(len(tokenizer.tokenize(parts[0])))
-            metrics["tok_ans"].append(0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1])))
+            metrics["tok_ans"].append(
+                0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1]))
+            )
             metrics["tok"].append(len(toks := tokenizer.tokenize(response_text)))
             metrics["too_long"].append(metrics["tok"][-1] >= max_len)
-            metrics["repetitive"].append(len(set(w := toks[-repeat_window:]))/len(w) < unique_thresh)
-            i=1
+            metrics["repetitive"].append(
+                len(set(w := toks[-repeat_window:])) / len(w) < unique_thresh
+            )
+            i = 1
             if i in n_stats_list:
                 metrics[f"tok@{i}"] = sum(metrics["tok"]) / len(metrics["tok"])
-                metrics[f"tok_think@{i}"] = sum(metrics["tok_think"]) / len(metrics["tok_think"])
-                metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(metrics["tok_ans"])
-                metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(metrics["too_long"])
-                metrics[f"repetitive@{i}"] = sum(metrics["repetitive"]) / len(metrics["repetitive"])
-
+                metrics[f"tok_think@{i}"] = sum(metrics["tok_think"]) / len(
+                    metrics["tok_think"]
+                )
+                metrics[f"tok_ans@{i}"] = sum(metrics["tok_ans"]) / len(
+                    metrics["tok_ans"]
+                )
+                metrics[f"too_long@{i}"] = sum(metrics["too_long"]) / len(
+                    metrics["too_long"]
+                )
+                metrics[f"repetitive@{i}"] = sum(metrics["repetitive"]) / len(
+                    metrics["repetitive"]
+                )
 
     if addtokens:
         addtoks = [2**x for x in range(6, int(np.log2(max_len)) + 1)]
-        metrics_tok = ["tok", "tok_think", "tok_ans", "too_long", "repetitive", "exact_match", "tok@1", "tok_think@1", "tok_ans@1", "too_long@1", "repetitive@1"]
-        metrics_tok_dict = {(k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): copy.copy(metrics[k]) for k in metrics_tok for t in addtoks}
-        metrics = {**metrics_tok_dict, **{k: v for k, v in metrics.items() if k not in metrics_tok}}
+        metrics_tok = [
+            "tok",
+            "tok_think",
+            "tok_ans",
+            "too_long",
+            "repetitive",
+            "exact_match",
+            "tok@1",
+            "tok_think@1",
+            "tok_ans@1",
+            "too_long@1",
+            "repetitive@1",
+        ]
+        metrics_tok_dict = {
+            (k.replace("@", f"@{t}@") if "@" in k else f"{k}@{t}"): copy.copy(
+                metrics[k]
+            )
+            for k in metrics_tok
+            for t in addtoks
+        }
+        metrics = {
+            **metrics_tok_dict,
+            **{k: v for k, v in metrics.items() if k not in metrics_tok},
+        }
         for t in addtoks:
             for i, t_used in enumerate(metrics[f"tok@{t}"]):
                 if t_used > t:
@@ -368,11 +436,18 @@ def process_results(doc: dict, results: List[str], repeat_window=100, unique_thr
                     metrics[f"too_long@{t}"][i] = 1
 
             for i in n_stats_list:
-                metrics[f"tok@{t}@{i}"] = sum(metrics[f"tok@{t}"][:i]) / len(metrics[f"tok@{t}"][:i])
-                metrics[f"tok_think@{t}@{i}"] = sum(metrics[f"tok_think@{t}"][:i]) / len(metrics[f"tok_think@{t}"][:i])
-                metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"][:i]) / len(metrics[f"tok_ans@{t}"][:i])
-                metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"][:i]) / len(metrics[f"too_long@{t}"][:i])
+                metrics[f"tok@{t}@{i}"] = sum(metrics[f"tok@{t}"][:i]) / len(
+                    metrics[f"tok@{t}"][:i]
+                )
+                metrics[f"tok_think@{t}@{i}"] = sum(
+                    metrics[f"tok_think@{t}"][:i]
+                ) / len(metrics[f"tok_think@{t}"][:i])
+                metrics[f"tok_ans@{t}@{i}"] = sum(metrics[f"tok_ans@{t}"][:i]) / len(
+                    metrics[f"tok_ans@{t}"][:i]
+                )
+                metrics[f"too_long@{t}@{i}"] = sum(metrics[f"too_long@{t}"][:i]) / len(
+                    metrics[f"too_long@{t}"][:i]
+                )
     print(metrics)
 
     return metrics
-
