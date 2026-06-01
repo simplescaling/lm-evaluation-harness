@@ -33,12 +33,19 @@ from lm_eval.utils import (
 
 
 try:
-    import ray
     from vllm import LLM, SamplingParams
     from vllm.lora.request import LoRARequest
-    from vllm.transformers_utils.tokenizer import get_tokenizer
+    try:
+        from vllm.transformers_utils.tokenizer import get_tokenizer
+    except ModuleNotFoundError:
+        from vllm.tokenizers import get_tokenizer
 except ModuleNotFoundError:
     pass
+
+try:
+    import ray
+except ModuleNotFoundError:
+    ray = None
 
 if TYPE_CHECKING:
     pass
@@ -340,7 +347,7 @@ class VLLMTool(TemplateLM):
         #     use_tqdm=True if self.batch_size == "auto" else False,
         # )
         
-        prompts_to_return, completions_to_return, tool_stats, completions_to_return_concatted = generate_with_tool_batch(
+        prompts_to_return, completions_to_return, tool_stats = generate_with_tool_batch(
             prompts=requests,
             args=tool_args,
             llm=self.model,
@@ -353,8 +360,6 @@ class VLLMTool(TemplateLM):
             save_last_k=int(os.getenv("SAVE_LAST_K", 0)),
             subtract=os.getenv("SUBTRACT", False),
         )
-        # import pdb; pdb.set_trace()
-        # ./{self.model_args['model'].replace('/', '_')}_
         with open(f"tool_usage.jsonl", "a") as f:
             f.write(json.dumps(tool_stats) + "\n")
         with open(f"extra_completions.jsonl", "a") as f:
@@ -363,8 +368,7 @@ class VLLMTool(TemplateLM):
                     "prompt": p,
                     "completion": c
                 }, ensure_ascii=False) + "\n")
-        # return completions_to_return[-len(requests):]
-        return completions_to_return_concatted
+        return completions_to_return[-len(requests):]
 
     def loglikelihood_rolling(
         self, requests: List[Instance], disable_tqdm: bool = False

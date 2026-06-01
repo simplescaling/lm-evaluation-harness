@@ -33,6 +33,9 @@ metric_list:
   - metric: too_long@1
     aggregation: mean
     higher_is_better: true
+  - metric: repetitive@1
+    aggregation: mean
+    higher_is_better: true
   - metric: tok
     aggregation: meanlist
     higher_is_better: true
@@ -43,6 +46,9 @@ metric_list:
     aggregation: meanlist
     higher_is_better: true
   - metric: too_long
+    aggregation: meanlist
+    higher_is_better: true
+  - metric: repetitive
     aggregation: meanlist
     higher_is_better: true
 metadata:

@@ -17,15 +17,25 @@ def doc_to_text(doc: dict) -> str:
     return QUERY_TEMPLATE.format(Question=doc.get("problem", doc.get("question")))
 
 def process_docs(dataset: Dataset) -> Dataset:
-    def _process_doc(doc: dict) -> dict:
+    shard_rank = int(os.getenv("SHARD_RANK", "0"))
+    shard_world_size = int(os.getenv("SHARD_WORLD_SIZE", "1"))
+
+    def _process_doc(doc: dict, idx: int) -> dict:
         out_doc = {
             "problem": doc.get("problem", doc.get("question")),
             "answer": doc.get("answer", doc.get("orig_answer", doc.get("orig_orig_answer"))),
+            "doc_id": idx,
         }
         if getattr(doc, "few_shot", None) is not None:
             out_doc["few_shot"] = True
         return out_doc
-    return dataset.map(_process_doc)
+
+    dataset = dataset.map(_process_doc, with_indices=True)
+    if shard_world_size > 1:
+        dataset = dataset.filter(
+            lambda doc: doc["doc_id"] % shard_world_size == shard_rank
+        )
+    return dataset
 
 def process_results(
     doc: dict,
@@ -72,13 +82,19 @@ def process_results(
     VERIFYFN = os.getenv("VERIFYFN", "verify_math")
 
     for i, a in enumerate(results, start=1):
+        if not a:
+            a = ""
         if tokenizer is not None:
             parts = a.split(SEP, 1)
             metrics["tok_think"].append(len(tokenizer.tokenize(parts[0])))
             metrics["tok_ans"].append(0 if len(parts) == 1 else len(tokenizer.tokenize(parts[1])))
             metrics["tok"].append(len(toks := tokenizer.tokenize(a)))
             metrics["too_long"].append(metrics["tok"][-1] >= max_len)
-            metrics["repetitive"].append(len(set(w := toks[-repeat_window:]))/len(w) < unique_thresh)
+            if len(toks) >= repeat_window:
+                w = toks[-repeat_window:]
+                metrics["repetitive"].append(len(set(w)) / len(w) < unique_thresh)
+            else:
+                metrics["repetitive"].append(False)
             if i in n_stats_list:
                 metrics[f"tok@{i}"] = sum(metrics["tok"]) / len(metrics["tok"])
                 metrics[f"tok_think@{i}"] = sum(metrics["tok_think"]) / len(metrics["tok_think"])
