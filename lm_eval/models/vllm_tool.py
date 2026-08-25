@@ -314,7 +314,7 @@ class VLLMTool(TemplateLM):
                 lora_request: LoRARequest,
             ):
                 llm = LLM(**model_args)
-                prompts_to_return, completions_to_return, tool_stats = generate_with_tool_batch(
+                prompts_to_return, completions_to_return, tool_stats, completions_to_return_concatted = generate_with_tool_batch(
                     prompts=requests,
                     args=tool_args,
                     llm=llm,
@@ -322,7 +322,7 @@ class VLLMTool(TemplateLM):
                 )
                 with open(f"./{self.model_args['model'].replace('/', '_')}_tool_usage.jsonl", "a") as f:
                     f.write(json.dumps(tool_stats)+"\n")
-                return completions_to_return[-len(requests):]
+                return completions_to_return_concatted
                 
 
             # dispatch requests to all self.data_parallel_size workers, in interleaved fashion
@@ -347,7 +347,7 @@ class VLLMTool(TemplateLM):
         #     use_tqdm=True if self.batch_size == "auto" else False,
         # )
         
-        prompts_to_return, completions_to_return, tool_stats = generate_with_tool_batch(
+        prompts_to_return, completions_to_return, tool_stats, completions_to_return_concatted = generate_with_tool_batch(
             prompts=requests,
             args=tool_args,
             llm=self.model,
@@ -368,7 +368,7 @@ class VLLMTool(TemplateLM):
                     "prompt": p,
                     "completion": c
                 }, ensure_ascii=False) + "\n")
-        return completions_to_return[-len(requests):]
+        return completions_to_return_concatted
 
     def loglikelihood_rolling(
         self, requests: List[Instance], disable_tqdm: bool = False
